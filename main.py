@@ -118,51 +118,51 @@ sap_model.SetPresentUnits(kip_in_F)
 
 sap2000.saveandrunmodel(sap_model, api_path, file_name='API_1-001.sdb')
 
-# #%% OBTAIN RESULTS FROM SAP2000 MODEL
-#
-# # initialize for Sap2000 results
-#
-# [Frame3i, Frame3j, ret] = sap_model.FrameObj.GetPoints(Frame3, '', '')
-#
-# # get Sap2000 results for all load patterns:
-#
-# SapResult = OrderedDict()
-#
-# for key, val in LTYPE.items():
-#
-#     sap_model.Results.Setup.DeselectAllCasesAndCombosForOutput()
-#
-#     sap_model.Results.Setup.SetCaseSelectedForOutput(val)
-#
-#     [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = sap_model.Results.JointDispl(
-#         Frame3i, 0, 0, [], [], [], [], [], [], [], [], [], [], [])
-#
-#     SapResult[val] = U1[0]
-#
-# #%% CLOSE SAP2000 MODEL AND APPLICATION
-#
-# my_sap_object = sap2000.closemodel(my_sap_object)
-#
-# #%% MANIPULATE DATA
-#
-# # fill independent results
-#
-# IndResult = OrderedDict([('D', -0.02639), ('EQ', 0.06296)])
-#
-# # fill percent difference
-#
-# PercentDiff = {}
-#
-# for key, val in LTYPE.items():
-#     PercentDiff[val] = (SapResult[val] / IndResult[val]) - 1
-#
-# # display results
-#
-# for key, val in LTYPE.items():
-#     print()
-#
-#     print(SapResult[val])
-#
-#     print(IndResult[val])
-#
-#     print(PercentDiff[val])
+#%% OBTAIN RESULTS FROM SAP2000 MODEL
+
+# initialize for Sap2000 results
+
+[Frame3i, Frame3j, ret] = sap_model.FrameObj.GetPoints(Frame3, '', '')
+
+# get Sap2000 results for all load patterns:
+
+SapResult = OrderedDict()
+
+for key, val in LTYPE.items():
+
+    sap_model.Results.Setup.DeselectAllCasesAndCombosForOutput()
+
+    sap_model.Results.Setup.SetCaseSelectedForOutput(val)
+
+    [NumberResults, Obj, Elm, ACase, StepType, StepNum, U1, U2, U3, R1, R2, R3, ret] = sap_model.Results.JointDispl(
+        Frame3i, 0, 0, [], [], [], [], [], [], [], [], [], [], [])
+
+    SapResult[val] = U1[0]
+
+#%% CLOSE SAP2000 MODEL AND APPLICATION
+
+my_sap_object = sap2000.closemodel(my_sap_object)
+
+#%% MANIPULATE DATA
+
+# fill independent results
+
+IndResult = OrderedDict([('D', -0.02639), ('EQ', 0.06296)])
+
+# fill percent difference
+
+PercentDiff = {}
+
+for key, val in LTYPE.items():
+    PercentDiff[val] = (SapResult[val] / IndResult[val]) - 1
+
+# display results
+
+for key, val in LTYPE.items():
+    print()
+
+    print(SapResult[val])
+
+    print(IndResult[val])
+
+    print(PercentDiff[val])
