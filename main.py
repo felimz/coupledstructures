@@ -17,20 +17,16 @@ my_sap_object = sap2000.attachtoapi(attach_to_instance, specify_path, program_pa
 # create sap2000 model in memory
 sap_model = sap2000.newmodel(my_sap_object)
 
-
 #%% DEFINE MODEL GEOMETRY, PROPERTIES, AND LOADING
 
 # set model degrees of freedom to only allow forces and motion in the XZ plane
 
 DOF = [True, False, True, False, True, False]
-
 sap_model.Analyze.SetActiveDOF(DOF)
 
 # define material property
 
-MATERIAL_STEEL = 1
-
-sap_model.PropMaterial.SetMaterial('STEEL', MATERIAL_STEEL)
+sap_model.PropMaterial.SetMaterial('STEEL', sap2000.MATERIAL_TYPES["MATERIAL_STEEL"])
 
 # assign isotropic mechanical properties to material
 
@@ -38,8 +34,22 @@ sap_model.PropMaterial.SetMPIsotropic('STEEL', 29000, 0.3, 6E-06)
 
 # initialize section properties panda
 
-modelPropFrame = pd.DataFrame(columns=['name', 'material', 'depth', 'width'])
+modelPropFrame = []
+for i in range(4):
 
+    if i % 2 == 0:
+        depth = 12
+        width = 12
+    else:
+        depth = 60
+        width = 60
+
+    modelPropFrame.insert(-1, {'name': 'R' + str(i), 'material': 'STEEL', 'depth': depth, 'width': width})
+
+
+modelPropFrame = pd.DataFrame(modelPropFrame)
+
+print('hello world')
 
 sap_model.PropFrame.SetRectangle('R1', 'STEEL', 12, 12)
 sap_model.PropFrame.SetRectangle('R2', 'STEEL', 60, 60)
@@ -54,9 +64,7 @@ sap_model.PropFrame.SetModifiers('R1', ModValue)
 
 # switch to k-ft units
 
-kip_ft_F = 4
-
-sap_model.SetPresentUnits(kip_ft_F)
+sap_model.SetPresentUnits(sap2000.UNITS["kip_ft_F"])
 
 # add frame object by coordinates
 
@@ -93,30 +101,29 @@ sap_model.View.RefreshView(0, False)
 
 # add load patterns
 
-LTYPE = OrderedDict([(1, 'D'), (5, 'EQ')])
+load_patterns = {1: 'LTYPE_DEAD', 2: 'LTYPE_OTHER'}
 
-sap_model.LoadPatterns.Add(LTYPE[1], 1, 0, True)
-sap_model.LoadPatterns.Add(LTYPE[5], 5, 0, True)
+sap_model.LoadPatterns.Add(load_patterns[1], sap2000.LOAD_PATTERN_TYPES[load_patterns[1]], 0, True)
+sap_model.LoadPatterns.Add(load_patterns[2], sap2000.LOAD_PATTERN_TYPES[load_patterns[2]], 0, True)
 
 # assign loading for load pattern 'D'
 
 [Frame3i, Frame3j, ret] = sap_model.FrameObj.GetPoints(Frame3, '', '')
-sap_model.PointObj.SetLoadForce(Frame3i, LTYPE[1], [0, 0, -10, 0, 0, 0])
-sap_model.PointObj.SetLoadForce(Frame3j, LTYPE[1], [0, 0, -10, 0, 0, 0])
+sap_model.PointObj.SetLoadForce(Frame3i, load_patterns[1], [0, 0, -10, 0, 0, 0])
+sap_model.PointObj.SetLoadForce(Frame3j, load_patterns[1], [0, 0, -10, 0, 0, 0])
 
 # assign loading for load pattern 'EQ'
 [Frame3i, Frame3j, ret] = sap_model.FrameObj.GetPoints(Frame3, '', '')
-sap_model.FrameObj.SetLoadDistributed(Frame3, LTYPE[5], 1, 10, 0, 1, 1.8, 1.8)
+sap_model.FrameObj.SetLoadDistributed(Frame3, load_patterns[2], 1, 10, 0, 1, 1.8, 1.8)
 
 # switch to k-in units
 
-kip_in_F = 3
-
-sap_model.SetPresentUnits(kip_in_F)
+sap_model.SetPresentUnits(sap2000.UNITS["kip_in_F"])
 
 #%% SAVE MODEL AND RUN IT
 
-sap2000.saveandrunmodel(sap_model, api_path, file_name='API_1-001.sdb')
+file_name = 'API_1-001.sdb'
+sap2000.saveandrunmodel(sap_model, api_path, file_name)
 
 #%% OBTAIN RESULTS FROM SAP2000 MODEL
 
@@ -128,7 +135,7 @@ sap2000.saveandrunmodel(sap_model, api_path, file_name='API_1-001.sdb')
 
 SapResult = OrderedDict()
 
-for key, val in LTYPE.items():
+for key, val in load_patterns.items():
 
     sap_model.Results.Setup.DeselectAllCasesAndCombosForOutput()
 
@@ -147,18 +154,18 @@ my_sap_object = sap2000.closemodel(my_sap_object)
 
 # fill independent results
 
-IndResult = OrderedDict([('D', -0.02639), ('EQ', 0.06296)])
+IndResult = OrderedDict([('LTYPE_DEAD', -0.02639), ('LTYPE_OTHER', 0.06296)])
 
 # fill percent difference
 
 PercentDiff = {}
 
-for key, val in LTYPE.items():
+for key, val in load_patterns.items():
     PercentDiff[val] = (SapResult[val] / IndResult[val]) - 1
 
 # display results
 
-for key, val in LTYPE.items():
+for key, val in load_patterns.items():
     print()
 
     print(SapResult[val])
