@@ -1,60 +1,41 @@
 import sap2000
 from collections import OrderedDict
-import pandas as pd
+from modelclasses import Props
 
 #%% OPEN SAP2000 AND READY PROGRAM
 
-# check sap2000 installation and attach to sap2000 COM
-api_path = r"C:\Users\Felipe\PycharmProjects\CoupledStructures\models"
+# check working directory
+api_path = r'C:\Users\Felipe\Dropbox\PycharmProjects\CoupledStructures\models'
 sap2000.checkinstall(api_path)
 
 # create sap2000 object in memory
 attach_to_instance = False
 specify_path = False
-program_path = r"C:\Program Files\Computers and Structures\SAP2000 20\SAP2000.exe"
+program_path = r'C:\Program Files\Computers and Structures\SAP2000 20\SAP2000.exe'
 my_sap_object = sap2000.attachtoapi(attach_to_instance, specify_path, program_path)
 
-# create sap2000 model in memory
-sap_model = sap2000.newmodel(my_sap_object)
+# open sap2000
+visible = True
+sap_model = sap2000.opensap2000(my_sap_object,visible)
+
+# open new model in units of kip_in_F
+sap2000.newmodel(sap_model)
 
 #%% DEFINE MODEL GEOMETRY, PROPERTIES, AND LOADING
 
-# set model degrees of freedom to only allow forces and motion in the XZ plane
+# initiatilize frame properties object
+props_obj = Props()
 
-DOF = [True, False, True, False, True, False]
-sap_model.Analyze.SetActiveDOF(DOF)
+# set degrees of freedom for 2-D motion into sap2000
+props_obj.load_mdl_dof_df(sap_model, '2-D')
 
-# define material property
+# load dataframe of material properties into sap2000
+props_obj.load_mat_props_df(sap_model)
 
-sap_model.PropMaterial.SetMaterial('STEEL', sap2000.MATERIAL_TYPES["MATERIAL_STEEL"])
-
-# assign isotropic mechanical properties to material
-
-sap_model.PropMaterial.SetMPIsotropic('STEEL', 29000, 0.3, 6E-06)
-
-# initialize section properties panda
-
-modelPropFrame = []
-for i in range(4):
-
-    if i % 2 == 0:
-        depth = 12
-        width = 12
-    else:
-        depth = 60
-        width = 60
-
-    modelPropFrame.insert(-1, {'name': 'R' + str(i), 'material': 'STEEL', 'depth': depth, 'width': width})
-
-
-modelPropFrame = pd.DataFrame(modelPropFrame)
+# load dataframe of frame properties into sap2000
+props_obj.load_frm_props_df(sap_model)
 
 print('hello world')
-
-sap_model.PropFrame.SetRectangle('R1', 'STEEL', 12, 12)
-sap_model.PropFrame.SetRectangle('R2', 'STEEL', 60, 60)
-sap_model.PropFrame.SetRectangle('R3', 'STEEL', 12, 12)
-sap_model.PropFrame.SetRectangle('R4', 'STEEL', 60, 60)
 
 # define frame section property modifiers
 
@@ -64,16 +45,17 @@ sap_model.PropFrame.SetModifiers('R1', ModValue)
 
 # switch to k-ft units
 
-sap_model.SetPresentUnits(sap2000.UNITS["kip_ft_F"])
+sap_model.SetPresentUnits(sap2000.UNITS['kip_ft_F'])
 
 # add frame object by coordinates
 
-[Frame1, ret] = sap_model.FrameObj.AddByCoord(0, 0, 0, 0, 0, 20,  '', 'R1', 'Frame1', 'Global')
-[Frame2, ret] = sap_model.FrameObj.AddByCoord(20, 0, 0, 20, 0, 20, '', 'R1', 'Frame2', 'Global')
-[Frame3, ret] = sap_model.FrameObj.AddByCoord(0, 0, 20, 20, 0, 20, '', 'R2', 'Frame3', 'Global')
-[Frame4, ret] = sap_model.FrameObj.AddByCoord(40, 0, 0, 40, 0, 20, '', 'R3', 'Frame4', 'Global')
-[Frame5, ret] = sap_model.FrameObj.AddByCoord(60, 0, 0, 60, 0, 20, '', 'R3', 'Frame5', 'Global')
-[Frame6, ret] = sap_model.FrameObj.AddByCoord(40, 0, 20, 60, 0, 20, '', 'R4', 'Frame6', 'Global')
+[Frame1, ret] = sap_model.FrameObj.AddByCoord(0, 0, 0, 0, 0, 20,  '', 'R1', '', 'Global')
+[Frame2, ret] = sap_model.FrameObj.AddByCoord(20, 0, 0, 20, 0, 20, '', 'R1', '', 'Global')
+[Frame3, ret] = sap_model.FrameObj.AddByCoord(0, 0, 20, 20, 0, 20, '', 'R2', '', 'Global')
+[Frame4, ret] = sap_model.FrameObj.AddByCoord(40, 0, 0, 40, 0, 20, '', 'R3', '', 'Global')
+[Frame5, ret] = sap_model.FrameObj.AddByCoord(60, 0, 0, 60, 0, 20, '', 'R3', '', 'Global')
+[Frame6, ret] = sap_model.FrameObj.AddByCoord(40, 0, 20, 60, 0, 20, '', 'R4', '', 'Global')
+
 
 # assign point object restraint at base
 
@@ -118,7 +100,7 @@ sap_model.FrameObj.SetLoadDistributed(Frame3, load_patterns[2], 1, 10, 0, 1, 1.8
 
 # switch to k-in units
 
-sap_model.SetPresentUnits(sap2000.UNITS["kip_in_F"])
+sap_model.SetPresentUnits(sap2000.UNITS['kip_in_F'])
 
 #%% SAVE MODEL AND RUN IT
 
@@ -148,7 +130,8 @@ for key, val in load_patterns.items():
 
 #%% CLOSE SAP2000 MODEL AND APPLICATION
 
-my_sap_object = sap2000.closemodel(my_sap_object)
+save_model = False
+my_sap_object = sap2000.closesap2000(my_sap_object, save_model)
 
 #%% MANIPULATE DATA
 
