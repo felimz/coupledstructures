@@ -16,7 +16,7 @@ my_sap_object = sap2000.attachtoapi(attach_to_instance, specify_path, program_pa
 
 # open sap2000
 visible = True
-sap_model = sap2000.opensap2000(my_sap_object,visible)
+sap_model = sap2000.opensap2000(my_sap_object, visible)
 
 # open new model in units of kip_in_F
 sap2000.newmodel(sap_model)

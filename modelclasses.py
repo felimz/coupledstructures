@@ -6,20 +6,23 @@ class Props:
 
     def __init__(self):
 
-        self.mdl_dof_df = pd.DataFrame([{1: True, 2: False, 3: True, 4: False, 5: True, 6: False}])
+        self.mdl_dof_df = pd.DataFrame([dict([(1, True), (2, False), (3, True), (4, False), (5, True), (6, False)])])
         self.mat_props_df = []
         self.frm_props_list = []
         self.frm_props_df = []
 
-# Model properties methods
+    # Model properties methods
     def load_mdl_dof_df(self, sap_model, dof='2-D'):
 
         if dof == '3-D':
-            self.mdl_dof_df.iloc[[0]] = pd.DataFrame([{1: True, 2: True, 3: True, 4: True, 5: True, 6: True}])
+            self.mdl_dof_df.iloc[[0]] = [dict([(1, True), (2, True), (3, True), (4, True), (5, True), (6, True)])]
+
+
+        print('debugging')
 
         sap_model.Analyze.SetActiveDOF(self.mdl_dof_df)
 
-# Material properties methods
+    # Material properties methods
     def load_mat_props_df(self, sap_model):
 
         self.mat_props_df = pd.DataFrame([{'name': 'STEEL', 'material': sap2000.MATERIAL_TYPES['MATERIAL_STEEL'],
@@ -34,8 +37,7 @@ class Props:
 
             sap_model.PropMaterial.SetMPIsotropic(name, youngs, poisson, t_coeff)
 
-
-# Frame properties methods
+    # Frame properties methods
     def load_frm_props_df(self, sap_model):
 
         j = 1
@@ -55,7 +57,7 @@ class Props:
                 m = k
                 k += 1
 
-            self.frm_props_list.append({'name': name_prefix + str(m), 'material': 'STEEL', 'depth': [depth],
+            self.frm_props_list.append({'name': name_prefix + str(m), 'material': 'STEEL', 'depth': depth,
                                         'width': width})
 
         self.frm_props_df = pd.DataFrame(self.frm_props_list)
