@@ -118,7 +118,6 @@ def saveandrunmodel(sap_model, api_path, file_name='API_1-001.sdb'):
 
 #%% CLOSE SAP2000 MODEL AND APPLICATION
 def closesap2000(my_sap_object, save_model=False):
-    # close Sap2000
     
     my_sap_object.ApplicationExit(save_model)
 

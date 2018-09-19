@@ -17,10 +17,7 @@ class Props:
         if dof == '3-D':
             self.mdl_dof_df.iloc[[0]] = [dict([(1, True), (2, True), (3, True), (4, True), (5, True), (6, True)])]
 
-
-        print('debugging')
-
-        sap_model.Analyze.SetActiveDOF(self.mdl_dof_df)
+        sap_model.Analyze.SetActiveDOF(self.mdl_dof_df.values.tolist()[0])
 
     # Material properties methods
     def load_mat_props_df(self, sap_model):
