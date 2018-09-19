@@ -1,8 +1,8 @@
 import os
 import sys
-import sap2000
 from collections import OrderedDict
-from modelclasses import Props
+import sap2000
+from modelclasses import Model
 
 # %% OPEN SAP2000 AND READY PROGRAM
 
@@ -38,19 +38,17 @@ sap2000.newmodel(sap_model)
 
 #%% DEFINE MODEL GEOMETRY, PROPERTIES, AND LOADING
 
-# initialize frame properties object
-props_obj = Props()
+# initialize model object
+model = Model()
 
 # set degrees of freedom for 2-D motion into sap2000
-props_obj.load_mdl_dof_df(sap_model, '2-D')
+model.props.load_mdl_dof_df(sap_model, '2-D')
 
 # load dataframe of material properties into sap2000
-props_obj.load_mat_props_df(sap_model)
+model.props.load_mat_props_df(sap_model)
 
 # load dataframe of frame properties into sap2000
-props_obj.load_frm_props_df(sap_model)
-
-print('hello world')
+model.props.load_frm_props_df(sap_model)
 
 # define frame section property modifiers
 

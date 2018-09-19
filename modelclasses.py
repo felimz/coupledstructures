@@ -2,6 +2,13 @@ import pandas as pd
 import sap2000
 
 
+class Model:
+    def __init__(self, props=None, members=None, joints=None):
+        self.props = props or Props()
+        self.members = members or Members()
+        self.joints = joints or Joints()
+
+
 class Props:
 
     def __init__(self):
@@ -64,3 +71,13 @@ class Props:
             name, material, depth, width = [row['name'], row['material'], row['depth'], row['width']]
 
             sap_model.PropFrame.SetRectangle(name, material, depth, width)
+
+
+class Members:
+    def __init__(self):
+        print('Members Class')
+
+
+class Joints:
+    def __init__(self):
+        print('Joints Class')
