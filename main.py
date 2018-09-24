@@ -2,7 +2,7 @@ import os
 import sys
 from collections import OrderedDict
 import sap2000
-from modelclasses import Model
+import modelclasses
 
 # %% OPEN SAP2000 AND READY PROGRAM
 
@@ -31,24 +31,25 @@ my_sap_object = sap2000.attachtoapi(attach_to_instance, specify_path, program_pa
 
 # open sap2000
 visible = False
-sap_model = sap2000.opensap2000(my_sap_object, visible)
+model_obj = modelclasses.Model(sap2000.opensap2000(my_sap_object, visible))
 
 # open new model in units of kip_in_F
-sap2000.newmodel(sap_model)
+model_obj.new()
 
 #%% DEFINE MODEL GEOMETRY, PROPERTIES, AND LOADING
 
 # initialize model object
-model = Model()
 
 # set degrees of freedom for 2-D motion into sap2000
-model.props.load_mdl_dof_df(sap_model, '2-D')
+model_obj.props.load_mdl_dof_df('2-D')
 
 # load dataframe of material properties into sap2000
-model.props.load_mat_props_df(sap_model)
+model_obj.props.load_mat_props_df()
 
 # load dataframe of frame properties into sap2000
-model.props.load_frm_props_df(sap_model)
+model_obj.props.load_frm_props_df()
+
+print('debugging right now')
 
 # define frame section property modifiers
 
@@ -118,7 +119,7 @@ sap_model.SetPresentUnits(sap2000.UNITS['kip_in_F'])
 #%% SAVE MODEL AND RUN IT
 
 file_name = 'API_1-001.sdb'
-sap2000.saveandrunmodel(sap_model, api_path, file_name)
+modelclasses.saveandrunmodel(sap_model, api_path, file_name)
 
 #%% OBTAIN RESULTS FROM SAP2000 MODEL
 

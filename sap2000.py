@@ -91,31 +91,6 @@ def opensap2000(my_sap_object, visible=False):
     return sap_model
 
 
-def newmodel(sap_model):
-
-    # initialize sap model
-
-    sap_model.InitializeNewModel(UNITS['kip_in_F'])
-
-    # create new blank model
-
-    sap_model.File.NewBlank()
-
-
-#%% SAVE MODEL AND RUN IT
-def saveandrunmodel(sap_model, api_path, file_name='API_1-001.sdb'):
-
-    # save model
-    
-    model_path = api_path + os.sep + file_name
-    
-    sap_model.File.Save(model_path)
-    
-    # run model (this will create the analysis model)
-    
-    sap_model.Analyze.RunAnalysis()
-
-
 #%% CLOSE SAP2000 MODEL AND APPLICATION
 def closesap2000(my_sap_object, save_model=False):
     
@@ -123,9 +98,7 @@ def closesap2000(my_sap_object, save_model=False):
 
     my_sap_object = []
 
-    sap_model = []
-
-    return my_sap_object, sap_model
+    return my_sap_object
 
 
 DOF = {
@@ -294,4 +267,3 @@ LOAD_PATTERN_TYPES = {
     'LTYPE_CONSTRUCTION': 39,
 }
 
-PLACEHOLDER = 1
