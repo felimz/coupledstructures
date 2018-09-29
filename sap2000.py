@@ -100,6 +100,8 @@ def closesap2000(my_sap_object, save_model=False):
 
     return my_sap_object
 
+#%% THESE FUNCTIONS ARE MEANT TO INTERACT WITH THE PANDAS ARRAYS IN THE MODEL OBJECT
+
 
 DOF = {
     0: 'UX',
