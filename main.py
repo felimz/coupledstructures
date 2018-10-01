@@ -44,7 +44,7 @@ model_obj.new()
 model_obj.props.set_mdl_dof_df(dof='2-D')
 
 # load degrees of freedom for 2-D motion into sap2000
-model_obj.props.set_mdl_dof_df()
+model_obj.props.load_mdl_dof_df()
 
 # set material properties
 mat_steel = {'material': 'STEEL', 'material_id': sap2000.MATERIAL_TYPES['MATERIAL_STEEL'],
@@ -56,8 +56,7 @@ model_obj.props.add_mat_df(mat_steel)
 model_obj.props.load_mat_df()
 
 # generate frame properties
-model_obj.props.gen_frm_df(no_levels=1, col_stiff_1=1, bm_stiff_1=1,
-                           col_stiff_2=1, bm_stiff_3=1, link_stiff=1, link_level=1)
+model_obj.props.gen_frm_df(frm1_col_stiff=1, frm1_bm_stiff=1, frm2_col_stiff=1, frm2_bm_stiff=1)
 
 # load dataframe of frame properties into sap2000
 model_obj.props.load_frm_df()
@@ -66,6 +65,12 @@ model_obj.props.load_frm_df()
 model_obj.switch_units(units=sap2000.UNITS['kip_ft_F'])
 
 # add frame object by coordinates
+
+model_obj.members.gen_frm_df()
+
+model_obj.members.load_frm_df()
+
+print('generated and loaded members')
 
 [Frame1, ret] = model_obj.sap_obj.FrameObj.AddByCoord(0, 0, 0, 0, 0, 20,  '', 'R1', '', 'Global')
 [Frame2, ret] = model_obj.sap_obj.FrameObj.AddByCoord(20, 0, 0, 20, 0, 20, '', 'R1', '', 'Global')
@@ -145,6 +150,8 @@ for key, val in load_patterns.items():
 
     SapResult[val] = U1[0]
 
+print('Debugging line')
+
 #%% CLOSE SAP2000 MODEL AND APPLICATION
 
 sap_obj = sap2000.closesap2000(sap_obj, save_model=False)
@@ -172,3 +179,5 @@ for key, val in load_patterns.items():
     print(IndResult[val])
 
     print(PercentDiff[val])
+
+print('debugging line')
