@@ -64,11 +64,15 @@ model_obj.props.load_frm_df()
 # switch to k-ft units
 model_obj.switch_units(units=sap2000.UNITS['kip_ft_F'])
 
-# add frame object by coordinates
+# generate frames given arguments set into the gen_frm_df() function and load frames into sap2000
 
 model_obj.members.gen_frm_df()
 
 model_obj.members.load_frm_df()
+
+# refresh sap2000 view to show elements
+
+model_obj.tools.refresh_view()
 
 print('generated and loaded members')
 
@@ -126,6 +130,8 @@ model_obj.sap_obj.FrameObj.SetLoadDistributed(Frame3, load_patterns[2], 1, 10, 0
 model_obj.sap_obj.SetPresentUnits(sap2000.UNITS['kip_in_F'])
 
 #%% SAVE MODEL AND RUN IT
+
+print('before save and run')
 
 model_obj.saveandrun(api_path=api_path, file_name='API_1-001.sdb')
 

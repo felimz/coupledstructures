@@ -11,6 +11,7 @@ class Model:
         self.members = self.Members(self.sap_obj)
         self.loads = self.Loads(self.sap_obj)
         self.links = self.Links(self.sap_obj)
+        self.tools = self.Tools(self.sap_obj)
 
     def new(self):
         # re-initialize sap model
@@ -25,6 +26,7 @@ class Model:
         self.members = self.Members(self.sap_obj)
         self.loads = self.Loads(self.sap_obj)
         self.links = self.Links(self.sap_obj)
+        self.tools = self.Tools(self.sap_obj)
         self.new()
 
     def saveandrun(self, api_path, file_name='API_1-001.sdb'):
@@ -157,8 +159,8 @@ class Model:
                                                 'name', 'prop_name', 'user_name',
                                                 'csys', 'frm_i', 'frm_j'])
 
-        def add_frm(self, xi=None, yi=None, zi=None, xj=None, yj=None, zj=None,
-                    name='', prop_name=None, user_name=None, csys='Global'):
+        def add_frm_df(self, xi=None, yi=None, zi=None, xj=None, yj=None, zj=None,
+                       name='', prop_name=None, user_name=None, csys='Global'):
 
             self.frm_df = self.frm_df.append(pd.DataFrame([{'xi': xi, 'yi': yi, 'zi': zi,
                                                             'xj': xj, 'yj': yj, 'zj': zj,
@@ -218,30 +220,30 @@ class Model:
                 if i == 0:
 
                     for j in range(no_stories):
-
-                        self.add_frm(**new_memb(i_coords=(0, 0, j*frm_height),
-                                                length=frm_height, bm_or_col='col', frame_no=i+1,
-                                                left_or_right=1, story_no=j+1))
-                        self.add_frm(**new_memb(i_coords=(frm_width, 0, j*frm_height),
-                                                length=frm_height, bm_or_col='col', frame_no=i+1,
-                                                left_or_right=2, story_no=j+1))
-                        self.add_frm(**new_memb(i_coords=get_coords('frm{}_st{}_col{}'.format(i+1, j+1, 1),
-                                                memb_end='j'), length=frm_height, bm_or_col='bm', frame_no=i+1,
-                                                left_or_right=1, story_no=j+1))
+                        self.add_frm_df(**new_memb(i_coords=(0, 0, j * frm_height),
+                                                   length=frm_height, bm_or_col='col', frame_no=i + 1,
+                                                   left_or_right=1, story_no=j + 1))
+                        self.add_frm_df(**new_memb(i_coords=(frm_width, 0, j * frm_height),
+                                                   length=frm_height, bm_or_col='col', frame_no=i + 1,
+                                                   left_or_right=2, story_no=j + 1))
+                        self.add_frm_df(**new_memb(i_coords=get_coords('frm{}_st{}_col{}'.format(i + 1, j + 1, 1),
+                                                                       memb_end='j'), length=frm_height, bm_or_col='bm',
+                                                   frame_no=i + 1,
+                                                   left_or_right=1, story_no=j + 1))
 
                 if no_frames == 2 and i == 1:
 
                     for j in range(no_stories):
-
-                        self.add_frm(**new_memb(i_coords=(frm_width+frm_spacing, 0, j*frm_height),
-                                                length=frm_height, bm_or_col='col', frame_no=i+1,
-                                                left_or_right=1, story_no=j+1))
-                        self.add_frm(**new_memb(i_coords=(2*frm_width+frm_spacing, 0, j*frm_height),
-                                                length=frm_height, bm_or_col='col', frame_no=i+1,
-                                                left_or_right=2, story_no=j+1))
-                        self.add_frm(**new_memb(i_coords=get_coords('frm{}_st{}_col{}'.format(i+1, j+1, 1),
-                                                memb_end='j'), length=frm_height, bm_or_col='bm', frame_no=i+1,
-                                                left_or_right=1, story_no=j+1))
+                        self.add_frm_df(**new_memb(i_coords=(frm_width + frm_spacing, 0, j * frm_height),
+                                                   length=frm_height, bm_or_col='col', frame_no=i + 1,
+                                                   left_or_right=1, story_no=j + 1))
+                        self.add_frm_df(**new_memb(i_coords=(2 * frm_width + frm_spacing, 0, j * frm_height),
+                                                   length=frm_height, bm_or_col='col', frame_no=i + 1,
+                                                   left_or_right=2, story_no=j + 1))
+                        self.add_frm_df(**new_memb(i_coords=get_coords('frm{}_st{}_col{}'.format(i + 1, j + 1, 1),
+                                                                       memb_end='j'), length=frm_height, bm_or_col='bm',
+                                                   frame_no=i + 1,
+                                                   left_or_right=1, story_no=j + 1))
 
         def load_frm_df(self):
             for index, row in self.frm_df.iterrows():
@@ -262,19 +264,46 @@ class Model:
     class Links:
         def __init__(self, sap_obj):
             self.sap_obj = sap_obj
-            self.link_df = pd.DataFrame()
+            self.link_df = pd.DataFrame(columns=['xi', 'yi', 'zi', 'xj', 'yj', 'zj',
+                                                 'name', 'is_single_joint', 'prop_name', 'user_name',
+                                                 'csys', 'link_i', 'link_j'])
 
         # Link methods
-        def add_link_df(self, link_dict):
-            self.link_df = pd.DataFrame(link_dict)
+        def add_link_df(self, xi=None, yi=None, zi=None, xj=None, yj=None, zj=None,
+                        name='', is_single_joint=False, prop_name=None, user_name=None, csys='Global'):
+            self.link_df = self.link_df.append(pd.DataFrame([{'xi': xi, 'yi': yi, 'zi': zi,
+                                                              'xj': xj, 'yj': yj, 'zj': zj,
+                                                              'name': name, 'is_single_joint': is_single_joint,
+                                                              'prop_name': prop_name, 'user_name': user_name,
+                                                              'csys': csys}]),
+                                               ignore_index=True, sort=False)
 
         def load_link_df(self):
             for index, row in self.link_df.iterrows():
-                self.sap_obj.PropLink.SetLinear(row['name'], row['dof'], row['fixed'], row['ke'], row['ce'],
-                                                row['dj2'], row['dj3'], row['ke_coupled'], row['ce_coupled'],
-                                                row['notes'], row['guid'])
+                self.sap_obj.LinkObj.AddByCoord(row['xi'], row['yi'], row['zi'],
+                                                row['xj'], row['yj'], row['zj'],
+                                                row['name'], row['is_single_joint'],
+                                                row['prop_name'], row['user_name'],
+                                                row['csys'])
+
+                link_i, link_j, run = self.sap_obj.LinkObj.GetPoints(row['user_name'], '', '')
+
+                self.link_df.set_index('user_name', inplace=True)
+
+                self.link_df.loc[row['user_name'], 'link_i'] = link_i
+                self.link_df.loc[row['user_name'], 'link_j'] = link_j
+
+                self.link_df.reset_index(inplace=True)
 
     class Loads:
 
         def __init__(self, sap_obj):
             self.sap_obj = sap_obj
+
+    class Tools:
+
+        def __init__(self, sap_obj):
+            self.sap_obj = sap_obj
+
+        def refresh_view(self):
+            self.sap_obj.View.RefreshView(0, False)
