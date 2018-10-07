@@ -8,10 +8,7 @@ class Model:
     def __init__(self, my_sap_obj):
         self.sap_obj = my_sap_obj
         self.props = self.Props(self.sap_obj)
-        self.members = self.Members(self.sap_obj)
-        self.loads = self.Loads(self.sap_obj)
-        self.links = self.Links(self.sap_obj)
-        self.tools = self.Tools(self.sap_obj)
+        self.geometry = self.Geometry(self.sap_obj)
 
     def new(self):
         # re-initialize sap model
@@ -21,12 +18,9 @@ class Model:
         self.sap_obj.File.NewBlank()
 
     def reset(self):
-        # re-instance props, members, and joint classes and initialize new sap2000 model
+        # re-instance props, geometry, and joint classes and initialize new sap2000 model
         self.props = self.Props(self.sap_obj)
-        self.members = self.Members(self.sap_obj)
-        self.loads = self.Loads(self.sap_obj)
-        self.links = self.Links(self.sap_obj)
-        self.tools = self.Tools(self.sap_obj)
+        self.geometry = self.Geometry(self.sap_obj)
         self.new()
 
     def saveandrun(self, api_path, file_name='API_1-001.sdb'):
@@ -40,6 +34,9 @@ class Model:
 
     def switch_units(self, units):
         self.sap_obj.SetPresentUnits(units)
+
+    def refresh_view(self):
+        self.sap_obj.View.RefreshView(0, False)
 
     class Props:
 
@@ -141,31 +138,38 @@ class Model:
         # Link properties methods
         def add_link_df(self, link_dict):
 
-            self.frm_df = pd.DataFrame([link_dict])
+            self.link_df = self.link_df.append(pd.DataFrame([link_dict]), ignore_index=True, sort=False)
 
         def load_link_df(self):
 
-            for index, row in self.frm_df.iterrows():
+            for index, row in self.link_df.iterrows():
                 self.sap_obj.PropLink.SetLinear(row['name'], row['dof'], row['fixed'],
                                                 row['ke'], row['ce'], row['dj2'], row['dj3'],
                                                 row['ke_coupled'], row['ce_coupled'],
                                                 row['notes'], row['guid'])
 
-    class Members:
+                self.sap_obj.PropLink.SetWeightAndMass(row['name'], row['w'], row['m'],
+                                                       row['R1'], row['R2'], row['R3'])
+
+    class Geometry:
 
         def __init__(self, sap_obj):
             self.sap_obj = sap_obj
+
             self.frm_df = pd.DataFrame(columns=['xi', 'yi', 'zi', 'xj', 'yj', 'zj',
-                                                'name', 'prop_name', 'user_name',
-                                                'csys', 'frm_i', 'frm_j'])
+                                                'name', 'is_single_joint', 'prop_name', 'user_name',
+                                                'csys', 'frm_i', 'frm_j', 'frm_type', 'frame_no', 'story_no'])
 
         def add_frm_df(self, xi=None, yi=None, zi=None, xj=None, yj=None, zj=None,
-                       name='', prop_name=None, user_name=None, csys='Global'):
+                       name='', prop_name=None, user_name=None, csys='Global',
+                       frm_type=None, frame_no=None, story_no=None):
 
             self.frm_df = self.frm_df.append(pd.DataFrame([{'xi': xi, 'yi': yi, 'zi': zi,
                                                             'xj': xj, 'yj': yj, 'zj': zj,
                                                             'name': name, 'prop_name': prop_name,
-                                                            'user_name': user_name, 'csys': csys}]),
+                                                            'user_name': user_name, 'csys': csys,
+                                                            'frm_type': frm_type, 'frame_no': frame_no,
+                                                            'story_no': story_no}]),
                                              ignore_index=True, sort=False)
 
         def gen_frm_df(self, no_frames=2, no_stories=10, frm_width=20, frm_height=20, frm_spacing=20):
@@ -189,22 +193,22 @@ class Model:
                 return x, y, z
 
             def new_memb(i_coords=(0, 0, 0), length=1, frame_no=1, story_no=1,
-                         bm_or_col='col', left_or_right=1, props='default'):
+                         frm_type='col', left_or_right=1, props='default'):
 
                 frm_df_args = dict.fromkeys(
-                        ['xi', 'yi', 'zi', 'xj', 'yj', 'zj', 'prop_name', 'user_name'])
-
-                frm_df_args['user_name'] = 'frm{}_st{}_{}{}'.format(frame_no, story_no, bm_or_col, left_or_right)
+                        ['xi', 'yi', 'zi', 'xj', 'yj', 'zj',
+                         'prop_name', 'user_name',
+                         'frm_type', 'frame_no', 'story_no'])
 
                 frm_df_args.update({'xi': i_coords[0], 'yi': i_coords[0], 'zi': i_coords[0]})
 
                 # calculate j_coord from given i_coords
                 j_coords = ()
-                if bm_or_col == 'col':
+                if frm_type == 'col':
 
                     j_coords = (i_coords[0], i_coords[1], i_coords[2] + length)
 
-                elif bm_or_col == 'bm':
+                elif frm_type == 'bm':
 
                     j_coords = (i_coords[0] + length, i_coords[1], i_coords[2])
 
@@ -212,6 +216,14 @@ class Model:
                 frm_df_args.update({'xj': j_coords[0], 'yj': j_coords[1], 'zj': j_coords[2]})
 
                 frm_df_args['prop_name'] = props
+
+                frm_df_args['user_name'] = 'frm{}_st{}_{}{}'.format(frame_no, story_no, frm_type, left_or_right)
+
+                frm_df_args['frm_type'] = frm_type
+
+                frm_df_args['frame_no'] = frame_no
+
+                frm_df_args['story_no'] = story_no
 
                 return frm_df_args
 
@@ -221,13 +233,13 @@ class Model:
 
                     for j in range(no_stories):
                         self.add_frm_df(**new_memb(i_coords=(0, 0, j * frm_height),
-                                                   length=frm_height, bm_or_col='col', frame_no=i + 1,
+                                                   length=frm_height, frm_type='col', frame_no=i + 1,
                                                    left_or_right=1, story_no=j + 1))
                         self.add_frm_df(**new_memb(i_coords=(frm_width, 0, j * frm_height),
-                                                   length=frm_height, bm_or_col='col', frame_no=i + 1,
+                                                   length=frm_height, frm_type='col', frame_no=i + 1,
                                                    left_or_right=2, story_no=j + 1))
                         self.add_frm_df(**new_memb(i_coords=get_coords('frm{}_st{}_col{}'.format(i + 1, j + 1, 1),
-                                                                       memb_end='j'), length=frm_height, bm_or_col='bm',
+                                                                       memb_end='j'), length=frm_height, frm_type='bm',
                                                    frame_no=i + 1,
                                                    left_or_right=1, story_no=j + 1))
 
@@ -235,13 +247,13 @@ class Model:
 
                     for j in range(no_stories):
                         self.add_frm_df(**new_memb(i_coords=(frm_width + frm_spacing, 0, j * frm_height),
-                                                   length=frm_height, bm_or_col='col', frame_no=i + 1,
+                                                   length=frm_height, frm_type='col', frame_no=i + 1,
                                                    left_or_right=1, story_no=j + 1))
                         self.add_frm_df(**new_memb(i_coords=(2 * frm_width + frm_spacing, 0, j * frm_height),
-                                                   length=frm_height, bm_or_col='col', frame_no=i + 1,
+                                                   length=frm_height, frm_type='col', frame_no=i + 1,
                                                    left_or_right=2, story_no=j + 1))
                         self.add_frm_df(**new_memb(i_coords=get_coords('frm{}_st{}_col{}'.format(i + 1, j + 1, 1),
-                                                                       memb_end='j'), length=frm_height, bm_or_col='bm',
+                                                                       memb_end='j'), length=frm_height, frm_type='bm',
                                                    frame_no=i + 1,
                                                    left_or_right=1, story_no=j + 1))
 
@@ -261,49 +273,75 @@ class Model:
 
                 self.frm_df.reset_index(inplace=True)
 
-    class Links:
-        def __init__(self, sap_obj):
-            self.sap_obj = sap_obj
-            self.link_df = pd.DataFrame(columns=['xi', 'yi', 'zi', 'xj', 'yj', 'zj',
-                                                 'name', 'is_single_joint', 'prop_name', 'user_name',
-                                                 'csys', 'link_i', 'link_j'])
-
         # Link methods
         def add_link_df(self, xi=None, yi=None, zi=None, xj=None, yj=None, zj=None,
-                        name='', is_single_joint=False, prop_name=None, user_name=None, csys='Global'):
-            self.link_df = self.link_df.append(pd.DataFrame([{'xi': xi, 'yi': yi, 'zi': zi,
-                                                              'xj': xj, 'yj': yj, 'zj': zj,
-                                                              'name': name, 'is_single_joint': is_single_joint,
-                                                              'prop_name': prop_name, 'user_name': user_name,
-                                                              'csys': csys}]),
-                                               ignore_index=True, sort=False)
+                        name='', is_single_joint=False, prop_name=None, user_name=None,
+                        frm_type=None, story_no=None, csys='Global'):
+
+            self.frm_df = self.frm_df.append(pd.DataFrame([{'xi': xi, 'yi': yi, 'zi': zi,
+                                                            'xj': xj, 'yj': yj, 'zj': zj,
+                                                            'name': name, 'is_single_joint': is_single_joint,
+                                                            'prop_name': prop_name, 'user_name': user_name,
+                                                            'frm_type': frm_type, 'story_no': story_no,
+                                                            'csys': csys}]),
+                                             ignore_index=True, sort=False)
+
+        def new_link_df(self, story_no=0, props='default'):
+
+            def get_coords(frm_user_name, memb_end='i'):
+
+                x, y, z = [None, None, None]
+
+                if memb_end == 'i':
+                    self.frm_df.set_index('user_name', inplace=True)
+                    x, y, z = (self.frm_df.loc[frm_user_name, 'xi'],
+                               self.frm_df.loc[frm_user_name, 'yi'],
+                               self.frm_df.loc[frm_user_name, 'zi'])
+                    self.frm_df.reset_index(inplace=True)
+                elif memb_end == 'j':
+                    self.frm_df.set_index('user_name', inplace=True)
+                    x, y, z = (self.frm_df.loc[frm_user_name, 'xj'],
+                               self.frm_df.loc[frm_user_name, 'yj'],
+                               self.frm_df.loc[frm_user_name, 'zj'])
+                    self.frm_df.reset_index(inplace=True)
+
+                return x, y, z
+
+            story = None
+
+            if story_no == 0:
+
+                story = self.frm_df[['frame_no', 'story_no', 'zi', 'frm_type']].sort_values('zi', ascending=False).loc[
+                    (self.frm_df['frame_no'] == 1) & (self.frm_df['frm_type'] == 'bm'), 'story_no'].iloc[0]
+
+            elif story_no > 0:
+
+                story = self.frm_df[['frame_no', 'story_no', 'zi', 'frm_type']].sort_values('zi', ascending=True).loc[
+                    (self.frm_df['frame_no'] == 1) & (self.frm_df['frm_type'] == 'bm'), 'story_no'].iloc[story_no]
+
+            frm_user_name_1 = 'frm{}_st{}_bm{}'.format(1, story, 1)
+            frm_user_name_2 = 'frm{}_st{}_bm{}'.format(2, story, 1)
+
+            xi, yi, zi = get_coords(frm_user_name_1, memb_end='j')
+            xj, yj, zj = get_coords(frm_user_name_2, memb_end='i')
+
+            self.add_link_df(xi=xi, yi=yi, zi=zi, xj=xj, yj=yi, zj=zj,
+                             name='', is_single_joint=False, prop_name=props,
+                             user_name='Default', csys='Global')
 
         def load_link_df(self):
-            for index, row in self.link_df.iterrows():
+            for index, row in self.frm_df.iterrows():
                 self.sap_obj.LinkObj.AddByCoord(row['xi'], row['yi'], row['zi'],
                                                 row['xj'], row['yj'], row['zj'],
                                                 row['name'], row['is_single_joint'],
                                                 row['prop_name'], row['user_name'],
                                                 row['csys'])
 
-                link_i, link_j, run = self.sap_obj.LinkObj.GetPoints(row['user_name'], '', '')
+                frm_i, frm_j, run = self.sap_obj.LinkObj.GetPoints(row['user_name'], '', '')
 
-                self.link_df.set_index('user_name', inplace=True)
+                self.frm_df.set_index('user_name', inplace=True)
 
-                self.link_df.loc[row['user_name'], 'link_i'] = link_i
-                self.link_df.loc[row['user_name'], 'link_j'] = link_j
+                self.frm_df.loc[row['user_name'], 'frm_i'] = frm_i
+                self.frm_df.loc[row['user_name'], 'frm_j'] = frm_j
 
-                self.link_df.reset_index(inplace=True)
-
-    class Loads:
-
-        def __init__(self, sap_obj):
-            self.sap_obj = sap_obj
-
-    class Tools:
-
-        def __init__(self, sap_obj):
-            self.sap_obj = sap_obj
-
-        def refresh_view(self):
-            self.sap_obj.View.RefreshView(0, False)
+                self.frm_df.reset_index(inplace=True)

@@ -47,10 +47,10 @@ model_obj.props.set_mdl_dof_df(dof='2-D')
 model_obj.props.load_mdl_dof_df()
 
 # set material properties
-mat_steel = {'material': 'STEEL', 'material_id': sap2000.MATERIAL_TYPES['MATERIAL_STEEL'],
-             'youngs': 29000, 'poisson': 0.3, 't_coeff': 6E-06}
+mat_prop = {'material': 'STEEL', 'material_id': sap2000.MATERIAL_TYPES['MATERIAL_STEEL'],
+            'youngs': 29000, 'poisson': 0.3, 't_coeff': 6E-06}
 
-model_obj.props.add_mat_df(mat_steel)
+model_obj.props.add_mat_df(mat_prop)
 
 # load dataframe of material properties into sap2000
 model_obj.props.load_mat_df()
@@ -61,28 +61,50 @@ model_obj.props.gen_frm_df(frm1_col_stiff=1, frm1_bm_stiff=1, frm2_col_stiff=1, 
 # load dataframe of frame properties into sap2000
 model_obj.props.load_frm_df()
 
+
+# add link property
+
+dof = [False]*6
+fixed = [0]*6
+ke = [0]*6
+ce = [0]*6
+dj2 = 0
+dj3 = 0
+
+dof[0] = True
+
+ke[0] = 10
+
+link_prop = {'name': 'default', 'dof': dof, 'fixed': fixed,
+             'ke': ke, 'ce': ce, 'dj2': dj2, 'dj3': dj3,
+             'ke_coupled': False, 'ce_coupled': False,
+             'notes': '', 'guid': 'Default', 'w': 0,
+             'm': 0, 'R1': 0, 'R2': 0, 'R3': 0}
+
+model_obj.props.add_link_df(link_prop)
+
+model_obj.props.load_link_df()
+
 # switch to k-ft units
 model_obj.switch_units(units=sap2000.UNITS['kip_ft_F'])
 
 # generate frames given arguments set into the gen_frm_df() function and load frames into sap2000
 
-model_obj.members.gen_frm_df()
+model_obj.geometry.gen_frm_df()
 
-model_obj.members.load_frm_df()
+model_obj.geometry.load_frm_df()
+
+# add link
+
+model_obj.geometry.new_link_df()
+
+model_obj.geometry.load_link_df()
 
 # refresh sap2000 view to show elements
 
-model_obj.tools.refresh_view()
+model_obj.refresh_view()
 
-print('generated and loaded members')
-
-[Frame1, ret] = model_obj.sap_obj.FrameObj.AddByCoord(0, 0, 0, 0, 0, 20,  '', 'R1', '', 'Global')
-[Frame2, ret] = model_obj.sap_obj.FrameObj.AddByCoord(20, 0, 0, 20, 0, 20, '', 'R1', '', 'Global')
-[Frame3, ret] = model_obj.sap_obj.FrameObj.AddByCoord(0, 0, 20, 20, 0, 20, '', 'R2', '', 'Global')
-[Frame4, ret] = model_obj.sap_obj.FrameObj.AddByCoord(40, 0, 0, 40, 0, 20, '', 'R3', '', 'Global')
-[Frame5, ret] = model_obj.sap_obj.FrameObj.AddByCoord(60, 0, 0, 60, 0, 20, '', 'R3', '', 'Global')
-[Frame6, ret] = model_obj.sap_obj.FrameObj.AddByCoord(40, 0, 20, 60, 0, 20, '', 'R4', '', 'Global')
-
+print('generated and loaded geometry')
 
 # assign point object restraint at base
 
