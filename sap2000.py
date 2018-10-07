@@ -3,9 +3,8 @@ import sys
 import comtypes.client
 
 
-#%% CHECK WHETHER SAP2000 IS INSTALLED, AND SET WORKING PATH
+# %% CHECK WHETHER SAP2000 IS INSTALLED, AND SET WORKING PATH
 def checkinstall(api_path=r'C:\Users\Felipe\PycharmProjects\CoupledStructures\models'):
-
     if not os.path.exists(api_path):
 
         try:
@@ -17,11 +16,10 @@ def checkinstall(api_path=r'C:\Users\Felipe\PycharmProjects\CoupledStructures\mo
             pass
 
 
-#%% INITIALIZE COM CODE TO TIE INTO SAP2000 CSI OAPI AND OPEN SAP2000
+# %% INITIALIZE COM CODE TO TIE INTO SAP2000 CSI OAPI AND OPEN SAP2000
 # OR ATTACH TO EXISTING OPEN INSTANCE AND INSTANTIATE SAP2000 OBJECT
 def attachtoapi(attach_to_instance=False, specify_path=False,
                 program_path=r'C:\Program Files\Computers and Structures\SAP2000 20\SAP2000.exe'):
-
     if attach_to_instance:
 
         # attach to a running instance of SAP2000
@@ -79,9 +77,8 @@ def attachtoapi(attach_to_instance=False, specify_path=False,
     return my_sap_object
 
 
-#%% START SAP2000 AND CREATE NEW BLANK MODEL IN MEMORY
+# %% START SAP2000 AND CREATE NEW BLANK MODEL IN MEMORY
 def opensap2000(my_sap_object, visible=False):
-
     # create sap_model object
 
     my_sap_object.ApplicationStart(UNITS['kip_in_F'], visible)
@@ -91,17 +88,18 @@ def opensap2000(my_sap_object, visible=False):
     return sap_model
 
 
-#%% CLOSE SAP2000 MODEL AND APPLICATION
+# %% CLOSE SAP2000 MODEL AND APPLICATION
 def closesap2000(my_sap_object, save_model=False):
-    
     my_sap_object.ApplicationExit(save_model)
 
     my_sap_object = []
 
     return my_sap_object
 
-#%% THESE FUNCTIONS ARE MEANT TO INTERACT WITH THE PANDAS ARRAYS IN THE MODEL OBJECT
 
+# %% THESE FUNCTIONS ARE MEANT TO INTERACT WITH THE PANDAS ARRAYS IN THE MODEL OBJECT
+
+GRAVITY = 32.17405
 
 DOF = {
     0: 'UX',
@@ -156,6 +154,11 @@ EUNITS = {
     14: 'kgf_cm_C',
     15: 'N_cm_C',
     16: 'Ton_cm_C'}
+
+EITEM_TYPE = {
+    'Object': 0,
+    'Group': 1,
+    'SelectedObjects': 2}
 
 MATERIAL_TYPES = {
     'MATERIAL_STEEL': 1,
@@ -268,4 +271,3 @@ LOAD_PATTERN_TYPES = {
     'LTYPE_IMPACT': 38,
     'LTYPE_CONSTRUCTION': 39,
 }
-

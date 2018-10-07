@@ -48,7 +48,7 @@ model_obj.props.load_mdl_dof_df()
 
 # set material properties
 mat_prop = {'material': 'STEEL', 'material_id': sap2000.MATERIAL_TYPES['MATERIAL_STEEL'],
-            'youngs': 29000, 'poisson': 0.3, 't_coeff': 6E-06}
+            'youngs': 29000, 'poisson': 0.3, 't_coeff': 6E-06, 'weight': 0}
 
 model_obj.props.add_mat_df(mat_prop)
 
@@ -56,11 +56,10 @@ model_obj.props.add_mat_df(mat_prop)
 model_obj.props.load_mat_df()
 
 # generate frame properties
-model_obj.props.gen_frm_df(frm1_col_stiff=1, frm1_bm_stiff=1, frm2_col_stiff=1, frm2_bm_stiff=1)
+model_obj.props.gen_frm(frm1_col_stiff=25, frm1_bm_stiff=200, frm2_col_stiff=25, frm2_bm_stiff=200)
 
 # load dataframe of frame properties into sap2000
 model_obj.props.load_frm_df()
-
 
 # add link property
 
@@ -73,9 +72,9 @@ dj3 = 0
 
 dof[0] = True
 
-ke[0] = 10
+ke[0] = 5
 
-link_prop = {'name': 'default', 'dof': dof, 'fixed': fixed,
+link_prop = {'name': 'Default', 'dof': dof, 'fixed': fixed,
              'ke': ke, 'ce': ce, 'dj2': dj2, 'dj3': dj3,
              'ke_coupled': False, 'ce_coupled': False,
              'notes': '', 'guid': 'Default', 'w': 0,
@@ -90,45 +89,24 @@ model_obj.switch_units(units=sap2000.UNITS['kip_ft_F'])
 
 # generate frames given arguments set into the gen_frm_df() function and load frames into sap2000
 
-model_obj.geometry.gen_frm_df()
+model_obj.geometry.gen_frm(no_frames=2, no_stories=1, frm_width=20, frm_height=20, frm_spacing=20,
+                           frm1_bm_weight=20, frm2_bm_weight=20)
 
 model_obj.geometry.load_frm_df()
 
 # add link
 
-model_obj.geometry.new_link_df()
+model_obj.geometry.new_link()
 
 model_obj.geometry.load_link_df()
+
+# add restraints
+
+model_obj.geometry.set_restraints('fixed')
 
 # refresh sap2000 view to show elements
 
 model_obj.refresh_view()
-
-print('generated and loaded geometry')
-
-# assign point object restraint at base
-
-Restraint = [True, True, True, True, True, True]
-
-[Frame1i, Frame1j, ret] = model_obj.sap_obj.FrameObj.GetPoints(Frame1, '', '')
-
-model_obj.sap_obj.PointObj.SetRestraint(Frame1i, Restraint)
-
-[Frame2i, Frame1j, ret] = model_obj.sap_obj.FrameObj.GetPoints(Frame2, '', '')
-
-model_obj.sap_obj.PointObj.SetRestraint(Frame2i, Restraint)
-
-[Frame4i, Frame4j, ret] = model_obj.sap_obj.FrameObj.GetPoints(Frame4, '', '')
-
-model_obj.sap_obj.PointObj.SetRestraint(Frame4i, Restraint)
-
-[Frame5i, Frame5j, ret] = model_obj.sap_obj.FrameObj.GetPoints(Frame5, '', '')
-
-model_obj.sap_obj.PointObj.SetRestraint(Frame5i, Restraint)
-
-# refresh view, update (initialize) zoom
-
-model_obj.sap_obj.View.RefreshView(0, False)
 
 # add load patterns
 
