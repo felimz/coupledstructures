@@ -24,9 +24,10 @@ class Model:
         self.geometry = self.Geometry(self.sap_obj)
         self.new()
 
-    def saveandrun(self, api_path, file_name='API_1-001.sdb'):
+    def saveandrun(self, model_path, file_name='API_1-001.sdb'):
+
         # save model
-        model_path = ''.join([api_path, os.sep, file_name])
+        model_path = ''.join([model_path, os.sep, file_name])
 
         self.sap_obj.File.Save(model_path)
 
@@ -394,11 +395,19 @@ class Model:
         def __init__(self, sap_obj):
             self.sap_obj = sap_obj
 
-        def new_time_history_function(self, time_history_file):
-            pass
+        def load_time_history(self, name='el_centro', file_name=os.getcwd() + r'\support\el_centro.txt',
+                              headlines=0, pre_chars=0, points_per_line=3, value_type=2, free_format=False,
+                              number_fixed=10):
+            self.sap_obj.Func.FuncTH.SetFromFile_1(name, file_name, headlines, pre_chars, points_per_line,
+                                                   value_type, free_format, number_fixed)
 
-        def load_time_history(self, name, file_name, headlines, pre_chars,
-                                                                   points_per_line, value_type, free_format, number_fixed, dt)
-
-            self.sap_obj.Func.FuncTH.SetFromFile_1(name, file_name, headlines, pre_chars, points_per_line, value_type,
-                                               free_format, number_fixed, dt)
+        def set_time_history(self):
+            self.load_time_history()
+            self.sap_obj.LoadCases.ModHistLinear.SetCase('time_history')
+            self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('time_history', 0.05)
+            self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('time_history', 0.05)
+            self.sap_obj.LoadCases.ModHistLinear.SetLoads('time_history', 1, ['Accel'], ['U1'], ['el_centro'],
+                                                          [sap2000.GRAVITY], [1], [0], ['Global'], [0])
+            self.sap_obj.LoadCases.ModHistLinear.SetModalCase("time_history", "MODAL")
+            self.sap_obj.LoadCases.ModHistLinear.SetMotionType("time_history", 1)
+            self.sap_obj.LoadCases.ModHistLinear.SetTimeStep("time_history", 120, 0.05)

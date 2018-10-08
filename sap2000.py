@@ -4,16 +4,24 @@ import comtypes.client
 
 
 # %% CHECK WHETHER SAP2000 IS INSTALLED, AND SET WORKING PATH
-def checkinstall(api_path=r'C:\Users\Felipe\PycharmProjects\CoupledStructures\models'):
-    if not os.path.exists(api_path):
+def check_model_path(model_path=os.getcwd() + r'\models'):
 
+    root_dir = os.getcwd()
+
+    try:
+        os.chdir(model_path)
+    except FileNotFoundError:
+        print("Could not find model_path directory")
+
+    if not os.path.exists(model_path):
         try:
-
-            os.makedirs(api_path)
-
+            os.makedirs(model_path)
         except OSError:
-
             pass
+
+        else:
+            print('directory in {}'.format(model_path))
+            os.chdir(root_dir)
 
 
 # %% INITIALIZE COM CODE TO TIE INTO SAP2000 CSI OAPI AND OPEN SAP2000
@@ -23,56 +31,41 @@ def attachtoapi(attach_to_instance=False, specify_path=False,
     if attach_to_instance:
 
         # attach to a running instance of SAP2000
-
         try:
 
             # get the active SapObject
-
             my_sap_object = comtypes.client.GetActiveObject('CSI.SAP2000.API.SapObject')
 
         except (OSError, comtypes.COMError):
 
             print('No running instance of the program found or failed to attach.')
-
             sys.exit(-1)
 
     else:
 
         # create API helper object
-
         helper = comtypes.client.CreateObject('SAP2000v20.Helper')
-
         helper = helper.QueryInterface(comtypes.gen.SAP2000v20.cHelper)
 
         if specify_path:
 
             try:
-
                 # 'create an instance of the SAPObject from the specified path
-
                 my_sap_object = helper.CreateObject(program_path)
 
             except (OSError, comtypes.COMError):
-
                 print('Cannot start a new instance of the program from ' + program_path)
-
                 sys.exit(-1)
 
         else:
 
             try:
-
                 # create an instance of the SAPObject from the latest installed SAP2000
-
                 my_sap_object = helper.CreateObjectProgID('CSI.SAP2000.API.SapObject')
 
             except (OSError, comtypes.COMError):
-
                 print('Cannot start a new instance of the program.')
-
                 sys.exit(-1)
-
-        # start SAP2000 application
 
     return my_sap_object
 
