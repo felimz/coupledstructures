@@ -24,7 +24,12 @@ class Model:
         self.geometry = self.Geometry(self.sap_obj)
         self.new()
 
-    def saveandrun(self, model_path, file_name='API_1-001.sdb'):
+    def saveandrun(self, model_path, file_name='TestModel-001.sdb'):
+
+        self.sap_obj.Analyze.SetRunCaseFlag('', False, True)
+        self.sap_obj.Analyze.SetRunCaseFlag('DEAD', True)
+        self.sap_obj.Analyze.SetRunCaseFlag('MODAL', True)
+        self.sap_obj.Analyze.SetRunCaseFlag('TIME_HISTORY', True)
 
         # save model
         model_path = ''.join([model_path, os.sep, file_name])
@@ -205,8 +210,8 @@ class Model:
 
                 frm_df_args = dict.fromkeys(
                         ['xi', 'yi', 'zi', 'xj', 'yj', 'zj',
-                         'prop_name', 'user_name',
-                         'frm_type', 'frame_no', 'story_no'])
+                         'prop_name', 'user_name', 'frm_type',
+                         'frame_no', 'story_no', 'mass'])
 
                 frm_df_args.update({'xi': i_coords[0], 'yi': i_coords[0], 'zi': i_coords[0]})
 
@@ -214,13 +219,13 @@ class Model:
                 j_coords = ()
                 if frm_type == 'col':
 
+                    weight = 0
+
                     j_coords = (i_coords[0], i_coords[1], i_coords[2] + length)
 
                 elif frm_type == 'bm':
 
                     j_coords = (i_coords[0] + length, i_coords[1], i_coords[2])
-
-                    frm_df_args['mass'] = weight / sap2000.GRAVITY / length
 
                 frm_df_args.update({'xi': i_coords[0], 'yi': i_coords[1], 'zi': i_coords[2]})
                 frm_df_args.update({'xj': j_coords[0], 'yj': j_coords[1], 'zj': j_coords[2]})
@@ -235,6 +240,8 @@ class Model:
 
                 frm_df_args['story_no'] = story_no
 
+                frm_df_args['mass'] = weight / sap2000.GRAVITY / length
+
                 return frm_df_args
 
             for i in range(no_frames):
@@ -244,12 +251,12 @@ class Model:
                     for j in range(no_stories):
                         self.add_frm_df(**new_memb(i_coords=(0, 0, j * frm_height),
                                                    length=frm_height, frm_type='col', frame_no=i + 1,
-                                                   left_or_right=1, story_no=j + 1, props='F{}_RECT_COL1'.format(i + 1)
-                                                   ))
+                                                   left_or_right=1, story_no=j + 1,
+                                                   props='F{}_RECT_COL1'.format(i + 1)))
                         self.add_frm_df(**new_memb(i_coords=(frm_width, 0, j * frm_height),
                                                    length=frm_height, frm_type='col', frame_no=i + 1,
-                                                   left_or_right=2, story_no=j + 1, props='F{}_RECT_COL1'.format(i + 1)
-                                                   ))
+                                                   left_or_right=2, story_no=j + 1,
+                                                   props='F{}_RECT_COL1'.format(i + 1)))
                         self.add_frm_df(**new_memb(i_coords=get_coords('frm{}_st{}_col{}'.format(i + 1, j + 1, 1),
                                                                        memb_end='j'), length=frm_height, frm_type='bm',
                                                    frame_no=i + 1, left_or_right=1, props='F{}_RECT_BM1'.format(i + 1),
@@ -372,7 +379,7 @@ class Model:
 
         def add_restraints_df(self, name=None, value=None):
 
-            self.frm_df['i_restraint'].loc[self.frm_df['frm_i'] == name] = [value]
+            self.frm_df.loc[self.frm_df['frm_i'] == name, 'i_restraint'] = {'i_restraint': value}
 
         def set_restraints(self, restraint_type='pinned'):
 
@@ -403,11 +410,11 @@ class Model:
 
         def set_time_history(self):
             self.load_time_history()
-            self.sap_obj.LoadCases.ModHistLinear.SetCase('time_history')
-            self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('time_history', 0.05)
-            self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('time_history', 0.05)
-            self.sap_obj.LoadCases.ModHistLinear.SetLoads('time_history', 1, ['Accel'], ['U1'], ['el_centro'],
+            self.sap_obj.LoadCases.ModHistLinear.SetCase('TIME_HISTORY')
+            self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('TIME_HISTORY', 0.05)
+            self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('TIME_HISTORY', 0.05)
+            self.sap_obj.LoadCases.ModHistLinear.SetLoads('TIME_HISTORY', 1, ['Accel'], ['U1'], ['el_centro'],
                                                           [sap2000.GRAVITY], [1], [0], ['Global'], [0])
-            self.sap_obj.LoadCases.ModHistLinear.SetModalCase("time_history", "MODAL")
-            self.sap_obj.LoadCases.ModHistLinear.SetMotionType("time_history", 1)
-            self.sap_obj.LoadCases.ModHistLinear.SetTimeStep("time_history", 120, 0.05)
+            self.sap_obj.LoadCases.ModHistLinear.SetModalCase('TIME_HISTORY', "MODAL")
+            self.sap_obj.LoadCases.ModHistLinear.SetMotionType('TIME_HISTORY', 1)
+            self.sap_obj.LoadCases.ModHistLinear.SetTimeStep('TIME_HISTORY', 120, 0.05)

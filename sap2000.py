@@ -5,7 +5,6 @@ import comtypes.client
 
 # %% CHECK WHETHER SAP2000 IS INSTALLED, AND SET WORKING PATH
 def check_model_path(model_path=os.getcwd() + r'\models'):
-
     root_dir = os.getcwd()
 
     try:
@@ -28,6 +27,8 @@ def check_model_path(model_path=os.getcwd() + r'\models'):
 # OR ATTACH TO EXISTING OPEN INSTANCE AND INSTANTIATE SAP2000 OBJECT
 def attachtoapi(attach_to_instance=False, specify_path=False,
                 program_path=r'C:\Program Files\Computers and Structures\SAP2000 20\SAP2000.exe'):
+    my_sap_object = None
+
     if attach_to_instance:
 
         # attach to a running instance of SAP2000
@@ -38,10 +39,13 @@ def attachtoapi(attach_to_instance=False, specify_path=False,
 
         except (OSError, comtypes.COMError):
 
-            print('No running instance of the program found or failed to attach.')
-            sys.exit(-1)
+            print('Starting instance of SAP2000...')
+            pass
 
-    else:
+        else:
+            print('Attached to running instance of SAP2000...')
+
+    if 'my_sap_object' is not None:
 
         # create API helper object
         helper = comtypes.client.CreateObject('SAP2000v20.Helper')
@@ -57,6 +61,10 @@ def attachtoapi(attach_to_instance=False, specify_path=False,
                 print('Cannot start a new instance of the program from ' + program_path)
                 sys.exit(-1)
 
+            else:
+
+                print('SAP2000 is now running')
+
         else:
 
             try:
@@ -66,6 +74,9 @@ def attachtoapi(attach_to_instance=False, specify_path=False,
             except (OSError, comtypes.COMError):
                 print('Cannot start a new instance of the program.')
                 sys.exit(-1)
+
+            else:
+                print('SAP2000 is now running')
 
     return my_sap_object
 
