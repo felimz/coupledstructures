@@ -1,6 +1,10 @@
 import pandas as pd
+import os
+cwd = os.getcwd()
 
-file_path = r'\support\el_centro.txt'
+print(cwd)
+
+file_path = r'support\el_centro.txt'
 
 # Using Pandas with a column specification
 col_specification = [(0, 10), (20, 30), (30, 40), (30, 40), (50, 60), (70, 80)]
