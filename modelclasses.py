@@ -242,6 +242,8 @@ class Model:
 
                 frm_df_args['mass'] = weight / sap2000.GRAVITY / length
 
+                print( frm_df_args['mass'] )
+
                 return frm_df_args
 
             for i in range(no_frames):

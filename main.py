@@ -2,6 +2,7 @@ import os
 import sap2000
 from modelclasses import Model
 import pandas as pd
+from math import pi, sqrt
 
 # %% OPEN SAP2000 AND READY PROGRAM
 
@@ -45,9 +46,9 @@ model_obj.props.add_mat_df(mat_prop)
 model_obj.props.load_mat_df()
 
 frm1_col_stiff = 25
-frm1_bm_stiff = 200
+frm1_bm_stiff = 1000
 frm2_col_stiff = 25
-frm2_bm_stiff = 200
+frm2_bm_stiff = 1000
 
 # generate frame properties
 model_obj.props.gen_frm(frm1_col_stiff, frm1_bm_stiff, frm2_col_stiff, frm2_bm_stiff)
@@ -85,10 +86,14 @@ model_obj.switch_units(units=sap2000.UNITS['kip_ft_F'])
 
 no_frames = 2
 no_stories = 1
+frm_width = 20
 frm1_bm_weight = 20
 frm2_bm_weight = 20
+frm_height = 20
+frm_spacing = 20
 
-model_obj.geometry.gen_frm(no_frames=no_frames, no_stories=no_stories, frm_width=20, frm_height=20, frm_spacing=20,
+model_obj.geometry.gen_frm(no_frames=no_frames, no_stories=no_stories, frm_width=frm_width,
+                           frm_height=frm_height, frm_spacing=frm_spacing,
                            frm1_bm_weight=frm1_bm_weight, frm2_bm_weight=frm2_bm_weight)
 
 model_obj.geometry.load_frm_df()
@@ -115,42 +120,99 @@ model_obj.loads.set_time_history()
 
 model_obj.switch_units(units=sap2000.UNITS['kip_in_F'])
 
-model_obj.saveandrun(model_path=model_path,
-                     file_name='FRM{}_S-col1{}-col2{}_M-bm1{}-bm2{}'.format(no_frames,
-                                                                            frm1_col_stiff,
-                                                                            frm2_col_stiff,
-                                                                            frm1_bm_weight,
-                                                                            frm2_bm_weight))
+file_name = 'FRM{}_S-col1-{}-col2-{}_M-bm1-{}-bm2-{}'.format(no_frames,
+                                                             frm1_col_stiff,
+                                                             frm2_col_stiff,
+                                                             frm1_bm_weight,
+                                                             frm2_bm_weight)
 
-# %% OBTAIN DATA
-model_obj.sap_obj.Results.Setup.DeselectAllCasesAndCombosForOutput()
-model_obj.sap_obj.Results.Setup.SetCaseSelectedForOutput('TIME_HISTORY', True)
-model_obj.sap_obj.Results.Setup.SetOptionModalHist(1)
+model_obj.saveandrun(model_path=model_path, file_name=file_name)
 
 model_obj.refresh_view()
 
 
+# %% OBTAIN DATA
 class Results:
 
     def __init__(self):
-
         [self.number_results, self.obj, self.elm, self.a_case, self.step_type, self.step_num,
-         self.u1, self.u2, self.u3, self.r1, self.r2, self.r3, self.ret] = [None]*13
+         self.u1, self.u2, self.u3, self.r1, self.r2, self.r3, self.ret] = [None] * 13
 
-    def new_run(self, sap_function):
+        [self.mode_no, self.load_case, self.period, self.frequency, self.circ_freq, self.eigen_value] = [None] * 6
+
+    def new_joint_displ(self, sap_function):
         [self.number_results, self.obj, self.elm, self.a_case, self.step_type, self.step_num,
          self.u1, self.u2, self.u3, self.r1, self.r2, self.r3, self.ret] = sap_function
 
-
-ro = Results()
-
-ro.new_run(model_obj.sap_obj.Results.JointDispl('4', 0, 0,
-                                                [], [], [],
-                                                [], [], [],
-                                                [], [], [],
-                                                [], []))
+    def new_modal_period(self, sap_function):
+        [self.mode_no, self.load_case, self.step_type,
+         self.step_num, self.period, self.frequency, self.circ_freq,
+         self.eigen_value, self.ret] = sap_function
 
 
+out_df_args = dict.fromkeys(['file_name', 'no_frames',
+                             'max_u1_frm1', 'max_u1_frm2',
+                             'mass_frm1', 'mass_frm2',
+                             'stiff_frm1', 'stiff_frm2',
+                             'usr_period_frm1', 'usr_period_frm2',
+                             'sap_period_frm1', 'sap_period_frm2',
+                             'usr_period', 'sap_period',
+                             'frm1_bm_stiff', 'frm2_bm_stiff',
+                             'frm1_col_stiff', 'frm2_col_stiff',
+                             'frm1_bm_weight', 'frm2_bm_weight'])
+
+out_df = pd.DataFrame(columns=list(out_df_args.keys()))
+out_df.set_index('file_name', inplace=True)
+
+res = Results()
+
+model_obj.sap_obj.Results.Setup.DeselectAllCasesAndCombosForOutput()
+model_obj.sap_obj.Results.Setup.SetCaseSelectedForOutput('TIME_HISTORY', True)
+model_obj.sap_obj.Results.Setup.SetOptionModalHist(1)
+
+res.new_joint_displ(model_obj.sap_obj.Results.JointDispl('4', 0, 0, [], [], [], [], [], [], [], [], [], [], []))
+
+max_u1_frm1 = max((tuple(map(abs, res.u1))))
+mass_frm1 = frm1_bm_weight / sap2000.GRAVITY
+stiff_frm1 = frm1_col_stiff * 2
+usr_period_frm1 = 2 * pi * sqrt(mass_frm1 / stiff_frm1)
+
+res.new_joint_displ(model_obj.sap_obj.Results.JointDispl('6', 0, 0, [], [], [], [], [], [], [], [], [], [], []))
+
+max_u1_frm2 = max((tuple(map(abs, res.u1))))
+mass_frm2 = frm2_bm_weight / sap2000.GRAVITY
+stiff_frm2 = frm2_col_stiff * 2
+usr_period_frm2 = 2 * pi * sqrt(mass_frm2 / stiff_frm2)
+
+model_obj.sap_obj.Results.Setup.DeselectAllCasesAndCombosForOutput()
+model_obj.sap_obj.Results.Setup.SetCaseSelectedForOutput('MODAL', True)
+model_obj.sap_obj.Results.Setup.SetOptionModeShape(1, 1)
+
+print('Debugging Placeholder')
+
+res.new_modal_period(model_obj.sap_obj.Results.ModalPeriod(1, ['MODAL'], [], [], [], [], [], []))
+
+usr_period = 2 * pi * sqrt(mass_frm2 / stiff_frm2)
+
+sap_period_frm1 = min(res.period) / 2
+sap_period_frm2 = min(res.period) / 2
+
+sap_period = min(res.period)
+
+print('Debugging Placeholder')
+
+out_df.loc[file_name] = [no_frames,
+                         max_u1_frm1, max_u1_frm2,
+                         mass_frm1, mass_frm2,
+                         stiff_frm1, stiff_frm2,
+                         usr_period_frm1, usr_period_frm2,
+                         sap_period_frm1, sap_period_frm2,
+                         usr_period, sap_period,
+                         frm1_bm_stiff, frm2_bm_stiff,
+                         frm1_col_stiff, frm2_col_stiff,
+                         frm1_bm_weight, frm2_bm_weight]
+
+print('Debugging Placeholder')
 
 # %% CLOSE SAP2000 MODEL AND APPLICATION
 
@@ -158,4 +220,4 @@ sap_obj = sap2000.closesap2000(sap_obj, save_model=False)
 
 # %% MANIPULATE DATA
 
-print('debugging line')
+print('Script has terminated...')
