@@ -22,6 +22,7 @@ class Model:
         # re-instance props, geometry, and joint classes and initialize new sap2000 model
         self.props = self.Props(self.sap_obj)
         self.geometry = self.Geometry(self.sap_obj)
+        self.loads = self.Loads(self.sap_obj)
         self.new()
 
     def saveandrun(self, model_path, file_name='TestModel-001.sdb'):
@@ -241,8 +242,6 @@ class Model:
                 frm_df_args['story_no'] = story_no
 
                 frm_df_args['mass'] = weight / sap2000.GRAVITY / length
-
-                print( frm_df_args['mass'] )
 
                 return frm_df_args
 
