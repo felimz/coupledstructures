@@ -4,6 +4,7 @@ from modelclasses import Model
 import pandas as pd
 from math import pi, sqrt
 from numpy import arange
+import datetime
 
 # %% OPEN SAP2000 AND READY PROGRAM
 
@@ -29,7 +30,6 @@ model_obj = Model(sap2000.opensap2000(sap_obj, visible=False))
 
 model_obj.new()
 
-
 # set up output array
 
 out_df_args = dict.fromkeys(['file_name', 'no_frames',
@@ -45,8 +45,8 @@ out_df = pd.DataFrame(columns=list(out_df_args.keys()))
 out_df.set_index('file_name', inplace=True)
 
 run_flags = [1, 2]
-k1_range = arange(10000, 102500, 2500).tolist()
-kp_range = arange(1000, 10250, 250).tolist()
+k1_range = arange(10000, 105000, 5000).tolist()
+kp_range = arange(1000, 10500, 500).tolist()
 
 for k1_loop in k1_range:
 
@@ -158,6 +158,7 @@ for k1_loop in k1_range:
 
             model_obj.refresh_view()
 
+
             # %% OBTAIN DATA
             class Results:
 
@@ -177,6 +178,7 @@ for k1_loop in k1_range:
                      self.step_num, self.period, self.frequency, self.circ_freq,
                      self.eigen_value, self.ret] = sap_function
 
+
             res = Results()
 
             model_obj.sap_obj.Results.Setup.DeselectAllCasesAndCombosForOutput()
@@ -185,6 +187,8 @@ for k1_loop in k1_range:
 
             res.new_joint_displ(
                     model_obj.sap_obj.Results.JointDispl('4', 0, 0, [], [], [], [], [], [], [], [], [], [], []))
+
+            max_u1_frm1 = None
             try:
                 max_u1_frm1 = max((tuple(map(abs, res.u1))))
 
@@ -213,11 +217,16 @@ for k1_loop in k1_range:
                 k2 = frm2_col_stiff * 2
 
                 user_w = (1 / (2 * m1 ** 2 * m2 ** 2)) * (
-                        k2 * m1 ** 2 * m2 + kp * m1 ** 2 * m2 + k1 * m1 * m2 ** 2 + kp * m1 * m2 ** 2 -
-                        sqrt(((-k2) * m1 ** 2 * m2 - kp * m1 ** 2 * m2 - k1 * m1 * m2 ** 2 - kp * m1 * m2 ** 2) ** 2 -
-                             4 * (k1 * k2 * m1 ** 3 * m2 ** 3 + k1 * kp * m1 ** 3 * m2 ** 3 + k2 * kp * m1 ** 3 * m2 ** 3)))
+                        k2 * m1 ** 2 * m2 + kp * m1 ** 2 * m2 +
+                        k1 * m1 * m2 ** 2 + kp * m1 * m2 ** 2 -
+                        sqrt(((-k2) * m1 ** 2 * m2 - kp * m1 **
+                              2 * m2 - k1 * m1 * m2 ** 2 - kp *
+                              m1 * m2 ** 2) ** 2 - 4 *
+                             (k1 * k2 * m1 ** 3 * m2 ** 3 + k1
+                              * kp * m1 ** 3 * m2 ** 3 + k2
+                              * kp * m1 ** 3 * m2 ** 3)))
 
-                user_T = 2*pi/sqrt(user_w)
+                user_T = 2 * pi / sqrt(user_w)
 
             elif flag == 1:
                 frm2_bm_stiff = None
@@ -246,6 +255,10 @@ for k1_loop in k1_range:
 
             model_obj.reset()
 
+t_o = datetime.datetime.now()
+writer = pd.ExcelWriter('output_{}-{}-{}_{}-{}.xlsx'.format(t_o.year, t_o.month, t_o.day, t_o.hour, t_o.minute))
+out_df.to_excel(writer, 'Sheet1')
+writer.save()
 
 print('Debugging Placeholder')
 
