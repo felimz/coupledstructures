@@ -13,7 +13,7 @@ class Model:
 
     def new(self):
         # re-initialize sap model
-        self.sap_obj.InitializeNewModel(sap2000.UNITS['kip_in_F'])
+        self.sap_obj.InitializeNewModel(sap2000.UNITS['lb_in_F'])
 
         # create new blank model
         self.sap_obj.File.NewBlank()
@@ -22,6 +22,7 @@ class Model:
         # re-instance props, geometry, and joint classes and initialize new sap2000 model
         self.props = self.Props(self.sap_obj)
         self.geometry = self.Geometry(self.sap_obj)
+        self.loads = self.Loads(self.sap_obj)
         self.new()
 
     def saveandrun(self, model_path, file_name='TestModel-001.sdb'):
@@ -106,15 +107,15 @@ class Model:
                     if j % 2 == 0:
                         m += 1
                         name = 'F{}_RECT_COL{}'.format(i + 1, m)
-                        depth = (col_stiff[i] * 476.6896552) ** (1 / 4)
-                        width = (col_stiff[i] * 476.6896552) ** (1 / 4)
+                        depth = (col_stiff[i] * .4766896552) ** (1 / 4)
+                        width = (col_stiff[i] * .4766896552) ** (1 / 4)
                         modifiers = [1, 1, 1, 1, 1, 1, 1, 1]
                     # for beams
                     else:
                         k += 1
                         name = 'F{}_RECT_BM{}'.format(i + 1, k)
-                        depth = (bm_stiff[i] * 476.6896552) ** (1 / 4)
-                        width = (bm_stiff[i] * 476.6896552) ** (1 / 4)
+                        depth = (bm_stiff[i] * .4766896552) ** (1 / 4)
+                        width = (bm_stiff[i] * .4766896552) ** (1 / 4)
                         modifiers = [1, 1, 1, 1, 1, 1, 1, 1]
 
                     frm_dict = {'name': name, 'material': 'STEEL', 'depth': depth,
@@ -242,8 +243,6 @@ class Model:
 
                 frm_df_args['mass'] = weight / sap2000.GRAVITY / length
 
-                print( frm_df_args['mass'] )
-
                 return frm_df_args
 
             for i in range(no_frames):
@@ -284,7 +283,7 @@ class Model:
 
             previous_units = self.sap_obj.GetPresentUnits()
 
-            self.sap_obj.SetPresentUnits(sap2000.UNITS['kip_ft_F'])
+            self.sap_obj.SetPresentUnits(sap2000.UNITS['lb_ft_F'])
 
             for index, row in self.frm_df.loc[self.frm_df['frm_type'] != 'link'].iterrows():
                 self.sap_obj.FrameObj.AddByCoord(row['xi'], row['yi'], row['zi'],
@@ -371,7 +370,7 @@ class Model:
 
             previous_units = self.sap_obj.GetPresentUnits()
 
-            self.sap_obj.SetPresentUnits(sap2000.UNITS['kip_ft_F'])
+            self.sap_obj.SetPresentUnits(sap2000.UNITS['lb_ft_F'])
 
             for index, row in self.frm_df.loc[self.frm_df['frm_type'] == 'link'].iterrows():
                 self.sap_obj.LinkObj.AddByPoint(row['frm_i'], row['frm_j'], row['name'],
