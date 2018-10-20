@@ -46,7 +46,7 @@ out_df.set_index('file_name', inplace=True)
 
 run_flags = [1, 2]
 k1_range = arange(10000, 105000, 5000).tolist()
-kp_range = arange(1000, 10500, 500).tolist()
+kp_range = arange(500, 10500, 500).tolist()
 
 for k1_loop in k1_range:
 
@@ -69,7 +69,7 @@ for k1_loop in k1_range:
 
             # set material properties
             mat_prop = {'material': 'STEEL', 'material_id': sap2000.MATERIAL_TYPES['MATERIAL_STEEL'],
-                        'youngs': 29000, 'poisson': 0.3, 't_coeff': 6E-06, 'weight': 0}
+                        'youngs': 29000000, 'poisson': 0.3, 't_coeff': 6E-06, 'weight': 0}
 
             model_obj.props.add_mat_df(mat_prop)
 
@@ -152,7 +152,7 @@ for k1_loop in k1_range:
 
             # %% SAVE MODEL AND RUN IT
 
-            model_obj.switch_units(units=sap2000.UNITS['lb_in_F'])
+            model_obj.switch_units(units=sap2000.UNITS['kip_in_F'])
 
             model_obj.saveandrun(model_path=model_path, file_name=file_name)
 
