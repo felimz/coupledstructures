@@ -11,7 +11,7 @@ import datetime
 # check model directory
 root_dir = os.getcwd()
 
-model_path = root_dir + r'\models'
+model_path = os.path.join(os.environ['HOMEPATH'], 'Desktop') + r'\models'
 
 sap2000.check_model_path(model_path)
 
@@ -45,12 +45,21 @@ out_df = pd.DataFrame(columns=list(out_df_args.keys()))
 out_df.set_index('file_name', inplace=True)
 
 run_flags = [1, 2]
-k1_range = arange(10000, 105000, 5000).tolist()
-kp_range = arange(500, 10500, 500).tolist()
 
-for k1_loop in k1_range:
+m2 = 125000 / sap2000.GRAVITY / 12
+m1 = m2
+w2 = sqrt(100000 / m2)
 
-    for kp_loop in kp_range:
+n12_range = arange(0.1, 1.1, 0.1).round(decimals=2)
+kp1_range = arange(0.1, 1.1, 0.1).round(decimals=2)
+
+for n12_loop in n12_range:
+
+    k1_loop = round(m1 * (n12_loop * w2) ** 2, 2)
+
+    for kp1_loop in kp1_range:
+
+        kp_loop = round(k1_loop * kp1_loop, 4)
 
         for flag in run_flags:
             # %% DEFINE MODEL GEOMETRY, PROPERTIES, AND LOADING
@@ -157,7 +166,6 @@ for k1_loop in k1_range:
             model_obj.saveandrun(model_path=model_path, file_name=file_name)
 
             model_obj.refresh_view()
-
 
             # %% OBTAIN DATA
             class Results:

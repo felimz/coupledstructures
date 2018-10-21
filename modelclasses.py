@@ -412,10 +412,9 @@ class Model:
         def set_time_history(self):
             self.load_time_history()
             self.sap_obj.LoadCases.ModHistLinear.SetCase('TIME_HISTORY')
-            self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('TIME_HISTORY', 0.05)
-            self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('TIME_HISTORY', 0.05)
+            self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('TIME_HISTORY', 0)
             self.sap_obj.LoadCases.ModHistLinear.SetLoads('TIME_HISTORY', 1, ['Accel'], ['U1'], ['el_centro'],
                                                           [sap2000.GRAVITY], [1], [0], ['Global'], [0])
             self.sap_obj.LoadCases.ModHistLinear.SetModalCase('TIME_HISTORY', "MODAL")
             self.sap_obj.LoadCases.ModHistLinear.SetMotionType('TIME_HISTORY', 1)
-            self.sap_obj.LoadCases.ModHistLinear.SetTimeStep('TIME_HISTORY', 120, 0.05)
+            self.sap_obj.LoadCases.ModHistLinear.SetTimeStep('TIME_HISTORY', 2400, 0.005)
