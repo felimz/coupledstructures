@@ -155,15 +155,19 @@ for n12_loop in n12_range:
 
             model_obj.refresh_view()
 
-            # add time history excitation
+            # add response spectrum
 
-            model_obj.loads.set_time_history()
+            model_obj.loads.set_rsa()
+
+            # # add time history excitation
+            #
+            # model_obj.loads.set_time_history()
 
             # %% SAVE MODEL AND RUN IT
 
             model_obj.switch_units(units=sap2000.UNITS['kip_in_F'])
 
-            model_obj.saveandrun(model_path=model_path, file_name=file_name)
+            model_obj.saveandrun(model_path=model_path, file_name=file_name, anal_type='RSA')
 
             model_obj.refresh_view()
 
@@ -177,6 +181,9 @@ for n12_loop in n12_range:
                     [self.mode_no, self.load_case, self.period, self.frequency,
                      self.circ_freq, self.eigen_value] = [None] * 6
 
+                    [self.F1, self.F2, self.F3,
+                     self.Mx, self.My, self.Mz] = [None] * 6
+
                 def new_joint_displ(self, sap_function):
                     [self.number_results, self.obj, self.elm, self.a_case, self.step_type, self.step_num,
                      self.u1, self.u2, self.u3, self.r1, self.r2, self.r3, self.ret] = sap_function
@@ -186,40 +193,57 @@ for n12_loop in n12_range:
                      self.step_num, self.period, self.frequency, self.circ_freq,
                      self.eigen_value, self.ret] = sap_function
 
+                def new_joint_react(self, sap_function):
+                    [self.number_results, self.obj,
+                     self.elm, self.load_case, self.step_type, self.step_num,
+                     self.F1, self.F2, self.F3, self.Mx, self.My, self.Mz, self.ret] = sap_function
+
+
+            model_obj.switch_units(units=sap2000.UNITS['kip_ft_F'])
 
             res = Results()
 
             model_obj.sap_obj.Results.Setup.DeselectAllCasesAndCombosForOutput()
-            model_obj.sap_obj.Results.Setup.SetCaseSelectedForOutput('TIME_HISTORY', True)
-            model_obj.sap_obj.Results.Setup.SetOptionModalHist(1)
+            model_obj.sap_obj.Results.Setup.SetCaseSelectedForOutput('RSA', True)
+            # model_obj.sap_obj.Results.Setup.SetOptionModalHist(1)
+            #
+            # res.new_joint_displ(
+            #         model_obj.sap_obj.Results.JointDispl('4', 0, 0, [], [], [], [], [], [], [], [], [], [], []))
 
-            res.new_joint_displ(
-                    model_obj.sap_obj.Results.JointDispl('4', 0, 0, [], [], [], [], [], [], [], [], [], [], []))
+            res.new_joint_react(
+                    model_obj.sap_obj.Results.JointReact('1', 0, 0, [], [], [], [], [], [], [], [], [], [], []))
+
+            max_F1_frm1 = max((tuple(map(abs, res.F1))))
 
             max_u1_frm1 = None
-            try:
-                max_u1_frm1 = max((tuple(map(abs, res.u1))))
-
-            except ValueError:
-                print('There were issues obtaining max_u1_frm1 in file {}'.format(file_name))
+            # try:
+            #     max_u1_frm1 = max((tuple(map(abs, res.u1))))
+            #
+            # except ValueError:
+            #     print('There were issues obtaining max_u1_frm1 in file {}'.format(file_name))
 
             m1 = frm1_bm_weight / sap2000.GRAVITY / 12
             k1 = frm1_col_stiff * 2
             user_T = 2 * pi * sqrt(m1 / k1)
 
+            max_F1_frm2 = None
             max_u1_frm2 = None
             m2 = None
             k2 = None
             if flag == 2:
 
-                res.new_joint_displ(
-                        model_obj.sap_obj.Results.JointDispl('6', 0, 0, [], [], [], [], [], [], [], [], [], [], []))
+                # res.new_joint_displ(
+                #         model_obj.sap_obj.Results.JointDispl('6', 0, 0, [], [], [], [], [], [], [], [], [], [], []))
 
-                try:
-                    max_u1_frm2 = max((tuple(map(abs, res.u1))))
+                # try:
+                #     max_u1_frm2 = max((tuple(map(abs, res.u1))))
+                #
+                # except ValueError:
+                #     print('There were issues obtaining max_u1_frm2 in file {}'.format(file_name))
 
-                except ValueError:
-                    print('There were issues obtaining max_u1_frm2 in file {}'.format(file_name))
+                res.new_joint_react(
+                        model_obj.sap_obj.Results.JointReact('5', 0, 0, [], [], [], [], [], [], [], [], [], [], []))
+                max_F1_frm2 = max((tuple(map(abs, res.F1))))
 
                 m2 = frm2_bm_weight / sap2000.GRAVITY / 12
                 k2 = frm2_col_stiff * 2
@@ -250,8 +274,17 @@ for n12_loop in n12_range:
 
             sap_T = min(res.period)
 
+            # out_df.loc[file_name] = [no_frames,
+            #                          max_u1_frm1, max_u1_frm2,
+            #                          m1, m2,
+            #                          k1, k2, kp,
+            #                          user_T, sap_T,
+            #                          frm1_bm_stiff, frm2_bm_stiff,
+            #                          frm1_col_stiff, frm2_col_stiff,
+            #                          frm1_bm_weight, frm2_bm_weight]
+
             out_df.loc[file_name] = [no_frames,
-                                     max_u1_frm1, max_u1_frm2,
+                                     max_F1_frm1, max_F1_frm2,
                                      m1, m2,
                                      k1, k2, kp,
                                      user_T, sap_T,

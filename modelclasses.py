@@ -25,12 +25,11 @@ class Model:
         self.loads = self.Loads(self.sap_obj)
         self.new()
 
-    def saveandrun(self, model_path, file_name='TestModel-001.sdb'):
+    def saveandrun(self, model_path, file_name='TestModel-001.sdb', anal_type='TIME_HISTORY'):
 
         self.sap_obj.Analyze.SetRunCaseFlag('', False, True)
-        self.sap_obj.Analyze.SetRunCaseFlag('DEAD', True)
         self.sap_obj.Analyze.SetRunCaseFlag('MODAL', True)
-        self.sap_obj.Analyze.SetRunCaseFlag('TIME_HISTORY', True)
+        self.sap_obj.Analyze.SetRunCaseFlag(anal_type, True)
 
         # save model
         model_path = ''.join([model_path, os.sep, file_name])
@@ -415,6 +414,18 @@ class Model:
             self.sap_obj.LoadCases.ModHistLinear.SetDampConstant('TIME_HISTORY', 0)
             self.sap_obj.LoadCases.ModHistLinear.SetLoads('TIME_HISTORY', 1, ['Accel'], ['U1'], ['el_centro'],
                                                           [sap2000.GRAVITY], [1], [0], ['Global'], [0])
-            self.sap_obj.LoadCases.ModHistLinear.SetModalCase('TIME_HISTORY', "MODAL")
+            self.sap_obj.LoadCases.ModHistLinear.SetModalCase('TIME_HISTORY', 'MODAL')
             self.sap_obj.LoadCases.ModHistLinear.SetMotionType('TIME_HISTORY', 1)
             self.sap_obj.LoadCases.ModHistLinear.SetTimeStep('TIME_HISTORY', 2400, 0.005)
+
+        def load_rsa(self):
+            self.sap_obj.Func.FuncRS.SetIBC2012('custom_rsa', 2, 0, 0, '', 1.5, 0.75, 8, 4, 0, 0, 0.05)
+
+        def set_rsa(self):
+            self.load_rsa()
+            self.sap_obj.LoadCases.ResponseSpectrum.SetCase('RSA')
+            self.sap_obj.LoadCases.ResponseSpectrum.SetDampConstant('RSA', 0.05)
+            self.sap_obj.LoadCases.ResponseSpectrum.SetLoads('RSA', 1, ['U1'], ['custom_rsa'],
+                                                             [sap2000.GRAVITY], ['Global'], [0])
+            self.sap_obj.LoadCases.ResponseSpectrum.SetModalCase('RSA', 'MODAL')
+            self.sap_obj.LoadCases.ResponseSpectrum.SetModalComb_1('RSA', 1)
