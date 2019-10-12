@@ -19,7 +19,7 @@ sap2000.check_model_path(model_path)
 # in case user wants to attach to running instance, set attach_to_instance=True
 # OAPI can automatically find most recent installation starting with SAP2000 v19
 # For other installs, set specify_path=True
-program_path = r'C:\Program Files\Computers and Structures\SAP2000 20\SAP2000.exe'
+program_path = r'C:\Program Files\Computers and Structures\SAP2000 21\SAP2000.exe'
 sap_obj = sap2000.attachtoapi(attach_to_instance=False, specify_path=False, program_path=program_path)
 
 # open sap2000
