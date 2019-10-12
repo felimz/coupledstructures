@@ -49,7 +49,7 @@ def attachtoapi(attach_to_instance=False, specify_path=False,
 
         # create API helper object
         helper = comtypes.client.CreateObject('SAP2000v21.Helper')
-        helper = helper.QueryInterface(comtypes.gen.SAP2000v21.cHelper)
+        helper = helper.QueryInterface(comtypes.gen.SAP2000v1.cHelper)
 
         if specify_path:
 
