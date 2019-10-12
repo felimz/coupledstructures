@@ -26,7 +26,7 @@ def check_model_path(model_path=os.getcwd() + r'\models'):
 # %% INITIALIZE COM CODE TO TIE INTO SAP2000 CSI OAPI AND OPEN SAP2000
 # OR ATTACH TO EXISTING OPEN INSTANCE AND INSTANTIATE SAP2000 OBJECT
 def attachtoapi(attach_to_instance=False, specify_path=False,
-                program_path=r'C:\Program Files\Computers and Structures\SAP2000 20\SAP2000.exe'):
+                program_path=r'C:\Program Files\Computers and Structures\SAP2000 21\SAP2000.exe'):
     my_sap_object = None
 
     if attach_to_instance:
@@ -48,8 +48,8 @@ def attachtoapi(attach_to_instance=False, specify_path=False,
     if 'my_sap_object' is not None:
 
         # create API helper object
-        helper = comtypes.client.CreateObject('SAP2000v20.Helper')
-        helper = helper.QueryInterface(comtypes.gen.SAP2000v20.cHelper)
+        helper = comtypes.client.CreateObject('SAP2000v21.Helper')
+        helper = helper.QueryInterface(comtypes.gen.SAP2000v21.cHelper)
 
         if specify_path:
 
