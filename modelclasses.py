@@ -74,7 +74,7 @@ class Model:
         # Material properties methods
         def add_mat_df(self, mat_dict):
 
-            self.mat_df = self.mat_df.append(pd.DataFrame([mat_dict]), ignore_index=True, sort=False)
+            self.mat_df = self.mat_df = pd.concat([self.mat_df, pd.DataFrame([mat_dict])], ignore_index=True)
 
         def load_mat_df(self):
 
@@ -127,7 +127,8 @@ class Model:
         # Frame properties methods
         def add_frm_df(self, frm_list):
 
-            self.frm_df = self.frm_df.append(pd.DataFrame(frm_list), ignore_index=True, sort=False)
+            self.frm_df = pd.concat([self.frm_df, pd.DataFrame(frm_list)], ignore_index=True)
+
 
         def load_frm_df(self):
 
@@ -149,7 +150,8 @@ class Model:
         # Link properties methods
         def add_link_df(self, link_dict):
 
-            self.link_df = self.link_df.append(pd.DataFrame([link_dict]), ignore_index=True, sort=False)
+            self.link_df = pd.concat([self.link_df, pd.DataFrame([link_dict])], ignore_index=True)
+
 
         def load_link_df(self):
 
@@ -176,13 +178,13 @@ class Model:
                        name='', prop_name=None, user_name=None, csys='Global',
                        frm_type=None, frame_no=None, story_no=None, mass=None):
 
-            self.frm_df = self.frm_df.append(pd.DataFrame([{'xi': xi, 'yi': yi, 'zi': zi,
+            self.frm_df = pd.concat([self.frm_df, pd.DataFrame([{'xi': xi, 'yi': yi, 'zi': zi,
                                                             'xj': xj, 'yj': yj, 'zj': zj,
                                                             'name': name, 'prop_name': prop_name,
                                                             'user_name': user_name, 'csys': csys,
                                                             'frm_type': frm_type, 'frame_no': frame_no,
-                                                            'story_no': story_no, 'mass': mass}]),
-                                             ignore_index=True, sort=False)
+                                                            'story_no': story_no, 'mass': mass}])],
+                                             ignore_index=True)
 
         def gen_frm(self, no_frames=2, no_stories=10, frm_width=20, frm_height=20, frm_spacing=20,
                     frm1_bm_weight=20, frm2_bm_weight=20):
@@ -311,14 +313,14 @@ class Model:
                         name='', is_single_joint=False, prop_name=None, user_name=None,
                         frm_type=None, story_no=None, csys='Global'):
 
-            self.frm_df = self.frm_df.append(
-                    pd.DataFrame([{'frm_i': frm_i, 'frm_j': frm_j, 'xi': xi, 'yi': yi, 'zi': zi,
+            self.frm_df = pd.concat([self.frm_df, pd.DataFrame(
+                                    [{'frm_i': frm_i, 'frm_j': frm_j, 'xi': xi, 'yi': yi, 'zi': zi,
                                    'xj': xj, 'yj': yj, 'zj': zj,
                                    'name': name, 'is_single_joint': is_single_joint,
                                    'prop_name': prop_name, 'user_name': user_name,
                                    'frm_type': frm_type, 'story_no': story_no,
-                                   'csys': csys}]),
-                    ignore_index=True, sort=False)
+                                   'csys': csys}])],
+                            ignore_index=True)
 
         def new_link(self, story_no=0, props='Default'):
 

@@ -1,4 +1,6 @@
 matplotlib
 numpy
 pandas
-comtypes==1.1.1
+comtypes
+pythonnet
+openpyxl

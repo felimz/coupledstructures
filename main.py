@@ -19,12 +19,12 @@ sap2000.check_model_path(model_path)
 # in case user wants to attach to running instance, set attach_to_instance=True
 # OAPI can automatically find most recent installation starting with SAP2000 v19
 # For other installs, set specify_path=True
-program_path = r'C:\Program Files\Computers and Structures\SAP2000 21\SAP2000.exe'
+program_path = r'C:\Program Files\Computers and Structures\SAP2000 25\SAP2000.exe'
 sap_obj = sap2000.attachtoapi(attach_to_instance=False, specify_path=False, program_path=program_path)
 
 # open sap2000
 # to show sap2000 GUI, set visible=True
-model_obj = Model(sap2000.opensap2000(sap_obj, visible=False))
+model_obj = Model(sap2000.opensap2000(sap_obj, visible=True))
 
 # open new model in units of lb_in_F
 
@@ -50,8 +50,8 @@ m2 = 125000 / sap2000.GRAVITY / 12
 m1 = m2
 w2 = sqrt(100000 / m2)
 
-n12_range = arange(0.1, 1.1, 0.1).round(decimals=2)
-kp1_range = arange(0.1, 1.1, 0.1).round(decimals=2)
+n12_range = arange(0.25, 1.25, 0.25).round(decimals=2)
+kp1_range = arange(0.25, 1.25, 0.25).round(decimals=2)
 
 for n12_loop in n12_range:
 
@@ -299,7 +299,7 @@ for n12_loop in n12_range:
 t_o = datetime.datetime.now()
 writer = pd.ExcelWriter('output_{}-{}-{}_{}-{}.xlsx'.format(t_o.year, t_o.month, t_o.day, t_o.hour, t_o.minute))
 out_df.to_excel(writer, 'Sheet1')
-writer.save()
+writer.close()
 
 print('Debugging Placeholder')
 
